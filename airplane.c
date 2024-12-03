@@ -152,11 +152,23 @@ void fromFileToList(Airplane *airplane, char *path){
         perror("erro em fromFileToList");
         exit(1);
     }
+
     FILE *file = fopen(path, "r");
     if(!file){
         perror("Erro ao abrir o arquivo");
         return;
     }
 
+    char empresa[50];
+    char lugares[3];
+    char tokey[50];
+
+    
+    while(fgets(tokey, 50, file)){
+        fgets(lugares, 3, file);
+        fgets(empresa, 50, file);
+        Data *data = createData(empresa, lugares, tokey);
+        pushToList(airplane, data);
+    }
 
 }
