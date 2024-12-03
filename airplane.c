@@ -148,12 +148,15 @@ void printList(Airplane *airplane){
 // funções para manipular arquivos
 
 void fromFileToList(Airplane *airplane, char *path){
-
+    if(!airplane){
+        perror("erro em fromFileToList");
+        exit(1);
+    }
     FILE *file = fopen(path, "r");
     if(!file){
         perror("Erro ao abrir o arquivo");
         return;
     }
 
-    
+
 }
