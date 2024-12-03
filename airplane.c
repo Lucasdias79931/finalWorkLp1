@@ -163,7 +163,10 @@ void fromFileToList(Airplane *airplane, char *path){
     char lugares[3];
     char tokey[50];
 
-    
+    /* 
+        le os dados do arquivo e armazena em uma struct Data
+        depois armazena a struct na lista principal que será manipulada pelo usuário
+    */
     while(fgets(tokey, 50, file)){
         fgets(lugares, 3, file);
         fgets(empresa, 50, file);
@@ -171,4 +174,50 @@ void fromFileToList(Airplane *airplane, char *path){
         pushToList(airplane, data);
     }
 
+    fclose(file);
+}
+
+
+void fromListToFile(Airplane *airplane, char *path){
+
+    if(!airplane){
+        perror("erro em fromListToFile");
+        exit(1);
+    }
+
+    FILE *file = fopen(path, "w");
+    if(!file){
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+
+    No *current = airplane->ini;
+    while(current){
+        fprintf(file, "%s\n%s\n%s\n", current->data->tokey, current->data->lugares, current->data->empresa);
+        current = current->next;
+    }
+    fclose(file);
+}
+
+
+
+// função principal
+
+int main(){
+    Airplane *airplane = malloc(sizeof(Airplane));
+    if(!airplane){
+        perror("erro ao alocar memória");
+        free(airplane);
+        exit(1);
+    }
+
+
+    char path[] = "DB/airplaneM.txt";
+
+    fromFileToList(airplane, path);
+
+    while(true){
+
+    }
+    
 }
