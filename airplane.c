@@ -211,6 +211,9 @@ int main(){
         exit(1);
     }
 
+    airplane->ini = NULL;
+    airplane->end = NULL;
+
 
     char path[] = "DB/airplaneM.txt";
 
