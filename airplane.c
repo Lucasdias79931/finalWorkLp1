@@ -125,21 +125,25 @@ void deleteInList(Airplane *airplane, char *tokey){
 
     No *current = airplane->ini;
     
-    while(current->next){
+    while(current){
         if(strcmp(current->data->tokey, tokey) == 0){
-            No *aux = current;
+            No *temp = current;
             current = current->next;
-
-            free(aux->data->tokey);
-            free(aux->data->lugaresMax);
-            free(aux->data->empresa);
-            free(aux->data->disponiveis);
-            free(aux->data);
-            free(aux);
-            printf("Aviao removido com sucesso\n");
+            airplane->size--;
+            if(airplane->ini == temp){
+                airplane->ini = current;
+            }
+            free(temp->data->tokey);
+            free(temp->data->empresa);
+            free(temp->data->lugaresMax);
+            free(temp->data->disponiveis);
+            free(temp->data);
+            free(temp);
             return;
         }
+        current = current->next;
     }
+
 
     printf("Aviao nao encontrado\n");
     return;
@@ -191,6 +195,8 @@ void fromFileToList(Airplane *airplane, char *path){
         fgets(lugaresMax, 10, file);
         fgets(lugaresDisponiveis, 10, file);
         fgets(empresa, 50, file);
+
+        
         
         Data *data = createData(empresa, lugaresMax, lugaresDisponiveis, tokey);
         pushToList(airplane, data);
@@ -253,7 +259,7 @@ void fromListToFile(Airplane *airplane, char *path){
 
     No *current = airplane->ini;
     while(current){
-        fprintf(file, "%s\n%s\n%s\n%s", current->data->tokey, current->data->lugaresMax,current->data->disponiveis, current->data->empresa);
+        fprintf(file, "%s%s%s%s", current->data->tokey, current->data->lugaresMax,current->data->disponiveis, current->data->empresa);
         current = current->next;
     }
     fclose(file);
@@ -299,13 +305,30 @@ int main(){
                 printList(airplane);
                 break;
             case '2':
+                printf("Digite o tokey do aviao a ser removido: ");
+                char *tokey = malloc(sizeof(char) * 51);
+                fgets(tokey, 51, stdin);
+                while(getchar() != '\n');
+
+                printf("\nTem certeza que deseja remover o aviao %s? ", tokey);
                 
+                char confirm;
+                scanf("%c", &confirm);
+
+                while(getchar() != '\n');
+                if(confirm != 's' && confirm != 'S'){
+                    printf("Remocao cancelada\n");
+                    free(tokey);
+                    break;
+                }
+                deleteInList(airplane, tokey);
+                free(tokey);
                 break;
             case '3':
                 char empresa[50];
                 char lugaresMax[] = "50";
                 char lugaresDisponiveis[] = "50";
-                char *tokey = creatTokey(airplane);
+                tokey = creatTokey(airplane);
 
                 printf("Digite o nome da empresa: ");
                 fgets(empresa, 50, stdin);
