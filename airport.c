@@ -6,147 +6,141 @@
 
 //Estruturas para os usuários
 
-typedef struct Burthday{
+typedef struct Date{
     char  day[3];
     char  month[3];
     char  year[5];
-}Burthday;
+}Date;
 
-typedef struct Users{
-    Burthday burthday;
+typedef struct Data{
+    Date date;
     char name[100];
     char email[100];
     char cpf[12];
     char password[50];
-     
+}Data;
+
+typedef struct No{
+    Data *data;
+    struct No *next;
+}No;
+
+
+typedef struct Users{
+    No *ini;
+    No *end;
+    int size;   
 }Users;
 
-// Verificação de login
-Users createUser(){
-    char name[100];
-    char email[100];
-    char day[3];
-    char month[3];
-    char year[5];
-    
-    printf("Digite seu nome: ");
-    fgets(name, 100, stdin);
-    while (getchar() != '\n');
+Data *creatUser(){
+    Data *user = malloc(sizeof(Data));
+    if(!user){
+        perror("erro ao alocar memória");
+        return NULL;
+    }
 
-    printf("Digite seu email: ");
-    fgets(email, 100, stdin);
-    while (getchar() != '\n');
+    printf("Digite o seu nome\n");
+    fgets(user->name,100,stdin);
+    while(getchar() != '\n');
 
-    printf("Digite seu dia de nascimento: ");
-    fgets(day, 3, stdin);
-    while (getchar() != '\n');
+    printf("Digite o seu e-mail\n");
+    fgets(user->email,100,stdin);
+    while(getchar() != '\n');
 
-    printf("Digite seu mes de nascimento: ");
-    fgets(month, 3, stdin);
-    while (getchar() != '\n');
-
-    printf("Digite seu ano de nascimento: ");
-    fgets(year, 5, stdin);
-    while (getchar() != '\n');
-
-    Users user;
-    strcpy(user.name, name);
-    strcpy(user.email, email);
-    strcpy(user.burthday.day, day);
-    strcpy(user.burthday.month, month);
-    strcpy(user.burthday.year, year);
     return user;
 }
-// Retorna false se o cpf já estiver cadastrado
-bool verifyCpf(Users *user, int size, char *cpf){
-    bool  cpfKey = false, passwordKey = false;
 
-    for(int i = 0; i < size; i++){
-        if(strcmp(user[i].cpf, cpf) == 0 ){
-            return false;
-        }
+
+// retorna false se cpf já estiver cadastrada
+bool veirfyCpf(char *cpf, Users *user){
+    if(user->size == 0){
+        return true;
     }
-    return true;
 
-}
+    No *current = user->ini;
 
-// Retorna false se a senha ja estiver cadastrada
-bool verifyPassword(Users *user, int size, char *password){
-    for(int i = 0; i < size; i++){
-        if(strcmp(user[i].password, password) == 0){
-            return false;
-        }
+    while (current)
+    {
+        if(strcmp(current->data->cpf, cpf) == 0)return false;
+        current = current->next;
     }
-    return true;
-}
 
-
-
-
-
-int main(){
-    Users *users = NULL;
-    int size = 0;
+    return false;
     
 
-    //login
-    while (true){
-        printf("Escolha uma opcao:\n");
-        printf("1 - Cadastrar\n");
-        printf("2 - Login\n");
-        printf("3 - Sair\n");
+}
 
-        char op;
+// retorna false se password já estiver cadastrada
+bool veirfyPass(char *pass, Users *user){
+    if(user->size == 0){
+        return true;
+    }
 
-        scanf("%c", &op);
+    No *current = user->ini;
+
+    while (current)
+    {
+        if(strcmp(current->data->password, pass) == 0)return false;
+        current = current->next;
+    }
+
+    return false;
+    
+
+}
+
+
+
+void pushUsers(Users *users, Data *data){
+    if(!users){
+        perror("Erro em pushUsers");
+        return;
+    }
+
+    No *new = malloc(sizeof(No));
+    if(!new){
+        perror("erro de alocação!");
+        free(new);
+        return;
+    }
+
+    new->data = data;
+
+    whiel(true){
+        printf("Digite o seu cpf\n");
+        fgets(data->cpf,12,stdin);
         while(getchar() != '\n');
-        
-        switch (op)
-        {
-        case '1':
-            char cpf[12];
-            char password[50];
 
-            while (true){
-                
-                printf("Digite seu CPF: ");
-                fgets(cpf, 12, stdin);
-                while (getchar() != '\n');
-                
-                if(users == NULL || verifyCpf(users, size, cpf)){
-                    break;
-                }else{
-                    printf("CPF ja cadastrado\n");
-                }
-            }
-        
-            while (true){
-                
-                printf("Digite sua senha: ");
-                fgets(password, 50, stdin);
-                while (getchar() != '\n');
-                
-                if(users == NULL || verifyPassword(users, size, password)){
-                    break;
-                }else{
-                    printf("Senha ja cadastrada\n");
-                }
-            }
-
-            Users user = createUser();
-
-            break;
-        
-        case '2':
-            break;
-        
-        case '3':
-            exit(0);
-            break;
-        default:
-            printf("Opcao invalida\n");
-            break;
+        if(!veirfyCpf(data->cpf)){
+            printf("cpf já existe!");
+            continue;
         }
+
+        break;
+       
+    }
+
+    while (true){
+        printf("Digite a sua senha com até 49 caracteresl\n");
+        fgets(data->password,50,stdin);
+        while(getchar() != '\n');
+
+        if(!veirfyPass(data->password)){
+            printf("senha já existe!");
+            continue;
+        }
+
+        break;
     }
     
+
+
+
+    if(users->end){
+        users->end->next = new;
+        users->end = new;
+    }else{
+        users->ini = new;
+        users->end = new;
+    }
 }
