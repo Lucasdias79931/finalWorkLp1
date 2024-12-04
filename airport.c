@@ -80,49 +80,6 @@ bool verifyPassword(Users *user, int size, char *password){
     return true;
 }
 
-void pushUser(Users **Users, int *size){
-    if(!Users){
-        perror("erro em pushUser");
-        exit(1);
-    }
-
-    char cpf[12];
-    char password[50];
-
-    while (true){
-        
-        printf("Digite seu CPF: ");
-        fgets(cpf, 12, stdin);
-        while (getchar() != '\n');
-        
-        if(verifyCpf(*Users, *size, cpf)){
-            break;
-        }else{
-            printf("CPF ja cadastrado\n");
-        }
-    }
-    
-    while (true){
-        
-        printf("Digite sua senha: ");
-        fgets(password, 50, stdin);
-        while (getchar() != '\n');
-        
-        if(verifyPassword(*Users, *size, password)){
-            break;
-        }else{
-            printf("Senha ja cadastrada\n");
-        }
-    }
-
-    if(size == 0){
-        *Users = malloc(sizeof(Users));
-
-
-    }else{
-        
-    }      
-}
 
 
 
@@ -147,6 +104,37 @@ int main(){
         switch (op)
         {
         case '1':
+            char cpf[12];
+            char password[50];
+
+            while (true){
+                
+                printf("Digite seu CPF: ");
+                fgets(cpf, 12, stdin);
+                while (getchar() != '\n');
+                
+                if(users == NULL || verifyCpf(users, size, cpf)){
+                    break;
+                }else{
+                    printf("CPF ja cadastrado\n");
+                }
+            }
+        
+            while (true){
+                
+                printf("Digite sua senha: ");
+                fgets(password, 50, stdin);
+                while (getchar() != '\n');
+                
+                if(users == NULL || verifyPassword(users, size, password)){
+                    break;
+                }else{
+                    printf("Senha ja cadastrada\n");
+                }
+            }
+
+            Users user = createUser();
+
             break;
         
         case '2':
