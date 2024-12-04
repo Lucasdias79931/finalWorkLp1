@@ -180,18 +180,18 @@ void fromFileToList(Airplane *airplane, char *path){
     }
 
     char empresa[50];
-    char lugaresMax[3];
-    char lugaresDisponiveis[3];
-    char tokey[50];
-
+    char lugaresMax[10];
+    char lugaresDisponiveis[10];
+    char tokey[51];
     /* 
         le os dados do arquivo e armazena em uma struct Data
         depois armazena a struct na lista principal que será manipulada pelo usuário
     */
-    while(fgets(tokey, 50, file)){
-        fgets(lugaresMax, 3, file);
-        fgets(lugaresDisponiveis, 3, file);
+    while(fgets(tokey, 51, file) != NULL){
+        fgets(lugaresMax, 10, file);
+        fgets(lugaresDisponiveis, 10, file);
         fgets(empresa, 50, file);
+        
         Data *data = createData(empresa, lugaresMax, lugaresDisponiveis, tokey);
         pushToList(airplane, data);
     }
@@ -208,11 +208,11 @@ char *creatTokey(Airplane *airplane){
 
     while(true){
         char *tokey = malloc(sizeof(char) * 50);
-        int i;
-        for(i = 0; i < 50; i++){
+        
+        for(int i = 0; i < 51; i++){
             tokey[i] = 'A' + rand() % 26;
         }
-        tokey[i] = '\0';
+        tokey[50] = '\0';
 
         if(airplane->size == 0){
             return tokey;
@@ -285,7 +285,8 @@ int main(){
         printf("1 - Listar avioes\n");
         printf("2 - Remover aviao\n");
         printf("3 - Adicionar aviao\n");
-        printf("4 - Sair\n");
+        printf("4 - Sair sem salvar\n");
+        printf("5 - Salvar e sair\n");
         
         char op;
         
@@ -315,6 +316,11 @@ int main(){
                 free(tokey);
                 break;
             case '4':
+                printf("Saindo sem salvar\n");
+                free(airplane);
+                exit(0);
+            case '5':
+                printf("Salvando e saindo\n");
                 fromListToFile(airplane, path);
                 free(airplane);
                 exit(0);
