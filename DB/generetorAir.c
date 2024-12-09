@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < size; i++) {
         data[i].tokey = newTokey(data, i);
         data[i].empresa = empresas[rand() % 15];
-        fprintf(file, "%s\n%s\n%s\n%s\n", data[i].tokey, "50", "50", data[i].empresa);
+        fprintf(file, "%s\n%s\n%s\n", data[i].tokey, "50", data[i].empresa);
     }
 
     for (int i = 0; i < size; i++) {

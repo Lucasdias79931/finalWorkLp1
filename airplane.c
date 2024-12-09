@@ -10,7 +10,6 @@ typedef struct Data{
     char *tokey;
     char *empresa;
     char *lugaresMax;
-    char *disponiveis;
 }Data;
 
 typedef struct No{
@@ -29,8 +28,8 @@ typedef struct Airplane{
 
 // funções para manipular lista de avioes
 
-Data *createData(char *empresa, char *lugaresMax, char *disponiveis, char *tokey){
-    if(!empresa || !lugaresMax || !tokey || !disponiveis){
+Data *createData(char *empresa, char *lugaresMax, char *tokey){
+    if(!empresa || !lugaresMax || !tokey ){
         perror("erro em createData");
         return NULL;
     }
@@ -70,21 +69,11 @@ Data *createData(char *empresa, char *lugaresMax, char *disponiveis, char *tokey
         return NULL;
     }
 
-    data->disponiveis = malloc(strlen(disponiveis) + 1);
-    if(!data->disponiveis){
-        perror("erro ao alocar memória");
-        free(data->disponiveis);
-        free(data->lugaresMax);
-        free(data->empresa);
-        free(data->tokey);
-        free(data);
-        return NULL;
-    }
+    
 
     strcpy(data->tokey, tokey);
     strcpy(data->empresa, empresa);
     strcpy(data->lugaresMax, lugaresMax);
-    strcpy(data->disponiveis, disponiveis);
     
     return data;
 
@@ -136,7 +125,6 @@ void deleteInList(Airplane *airplane, char *tokey){
             free(temp->data->tokey);
             free(temp->data->empresa);
             free(temp->data->lugaresMax);
-            free(temp->data->disponiveis);
             free(temp->data);
             free(temp);
             return;
@@ -163,7 +151,9 @@ void printList(Airplane *airplane){
 
     No *current = airplane->ini;
     while(current){
-        printf("Tokey: %s\nlugaresMax: %s\nLugares disponiveis: %s\nEmpresa: %s\n", current->data->tokey, current->data->lugaresMax, current->data->disponiveis, current->data->empresa);
+        printf("\n////////////////////////////////////////////////////////\n");
+        printf("Tokey:%slugaresMax:%sEmpresa:%s", current->data->tokey, current->data->lugaresMax, current->data->empresa);
+        printf("////////////////////////////////////////////////////////\n");
         current = current->next;
     }
 
@@ -185,7 +175,6 @@ void fromFileToList(Airplane *airplane, char *path){
 
     char empresa[50];
     char lugaresMax[10];
-    char lugaresDisponiveis[10];
     char tokey[51];
     /* 
         le os dados do arquivo e armazena em uma struct Data
@@ -193,12 +182,11 @@ void fromFileToList(Airplane *airplane, char *path){
     */
     while(fgets(tokey, 51, file) != NULL){
         fgets(lugaresMax, 10, file);
-        fgets(lugaresDisponiveis, 10, file);
         fgets(empresa, 50, file);
 
         
         
-        Data *data = createData(empresa, lugaresMax, lugaresDisponiveis, tokey);
+        Data *data = createData(empresa, lugaresMax, tokey);
         pushToList(airplane, data);
     }
 
@@ -259,7 +247,7 @@ void fromListToFile(Airplane *airplane, char *path){
 
     No *current = airplane->ini;
     while(current){
-        fprintf(file, "%s%s%s%s", current->data->tokey, current->data->lugaresMax,current->data->disponiveis, current->data->empresa);
+        fprintf(file, "%s%s%s", current->data->tokey, current->data->lugaresMax, current->data->empresa);
         current = current->next;
     }
     fclose(file);
@@ -327,14 +315,13 @@ int main(){
             case '3':
                 char empresa[50];
                 char lugaresMax[] = "50";
-                char lugaresDisponiveis[] = "50";
                 tokey = creatTokey(airplane);
 
                 printf("Digite o nome da empresa: ");
                 fgets(empresa, 50, stdin);
                 while(getchar() != '\n');
 
-                Data *data = createData(empresa, lugaresMax, lugaresDisponiveis, tokey);
+                Data *data = createData(empresa, lugaresMax, tokey);
                 pushToList(airplane, data);
                 free(tokey);
                 break;
