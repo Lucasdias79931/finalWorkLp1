@@ -87,24 +87,27 @@ void deleteInList(Airplane *airplane, char *tokey){
 
     No *current = airplane->ini;
     
-    while(current){
+    while(current != NULL){
+        
         if(strcmp(current->data->tokey, tokey) == 0){
             No *temp = current;
             current = current->next;
             airplane->size--;
+            
             if(airplane->ini == temp){
                 airplane->ini = current;
             }
-            
+            printf("\nACHOU!\n");
+            exit(1);
             free(temp->data);
             free(temp);
-            return;
+            
         }
         current = current->next;
     }
 
 
-    printf("Aviao nao encontrado\n");
+   
     return;
 }
 
