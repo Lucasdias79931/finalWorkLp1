@@ -79,37 +79,41 @@ void pushToList(Airplane *airplane, Data *data){
    airplane->size++;
 }
 
-void deleteInList(Airplane *airplane, char *tokey){
-    if(!airplane || !tokey){
+void deleteInList(Airplane *airplane, char *tokey) {
+    if (!airplane || !tokey) {
         perror("erro em deleteInList");
         exit(1);
     }
 
     No *current = airplane->ini;
-    
-    while(current != NULL){
-        
-        if(strcmp(current->data->tokey, tokey) == 0){
-            No *temp = current;
-            current = current->next;
-            airplane->size--;
-            
-            if(airplane->ini == temp){
-                airplane->ini = current;
+    No *prev = NULL;
+
+    while (current != NULL) {
+        if (strcmp(current->data->tokey, tokey) == 0) {
+            if (prev == NULL) {
+                airplane->ini = current->next;
+            } else {
+                prev->next = current->next;
             }
-            printf("\nACHOU!\n");
-            exit(1);
-            free(temp->data);
-            free(temp);
-            
+
+            airplane->size--;
+
+            // Libera a memória do nó removido
+            free(current->data);
+            free(current);
+
+            printf("Avião removido com sucesso\n");
+            return;
         }
+
+       
+        prev = current;
         current = current->next;
     }
 
-
-   
-    return;
+    printf("Avião com o tokey especificado não encontrado\n");
 }
+
 
 void printList(Airplane *airplane){
 
@@ -162,7 +166,7 @@ void fromFileToList(Airplane *airplane, char *path){
         strtok(lugaresMax, "\n");
         strtok(tokey, "\n");
         int  maxLugar = atoi(lugaresMax);
-        
+
         Data *data = createData(empresa, maxLugar, tokey);
         pushToList(airplane, data);
     }
@@ -228,7 +232,7 @@ void fromListToFile(Airplane *airplane, char *path){
     }
 
     No *current = airplane->ini;
-    while(current){
+    while(current != NULL){
         fprintf(file, "%s\n%i\n%s\n", current->data->tokey, current->data->lugaresMax, current->data->empresa);
         current = current->next;
     }
@@ -276,11 +280,11 @@ int main(){
                 break;
             case '2':
                 printf("Digite o tokey do aviao a ser removido: ");
-                char tokey[51];
-                fgets(tokey, 51, stdin);
+                char tokey[50];
+                fgets(tokey, 50, stdin);
                 while(getchar() != '\n');
 
-                printf("\nTem certeza que deseja remover o aviao %s? ", tokey);
+                printf("\nTem certeza que deseja remover o aviao:%s (s/n)?", tokey);
                 
                 char confirm;
                 scanf("%c", &confirm);
@@ -293,7 +297,7 @@ int main(){
                     break;
                 }
                 deleteInList(airplane, tokey);
-                printf("Aviao removido com sucesso\n");
+                
 
                 break;
             case '3':
