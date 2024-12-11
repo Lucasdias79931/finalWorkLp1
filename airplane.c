@@ -5,6 +5,8 @@
 #include <time.h>
 
 
+
+/////////////////////////////////////////////
 // Struct para armazenar os dados dos aviões
 typedef struct Data{
     char tokey[51];
@@ -26,6 +28,156 @@ typedef struct Airplane{
 
 
 
+// funções para manipular lista de avioes
+
+Data *createData(char *empresa, int lugaresMax, char *tokey);
+
+
+void pushToListAirplane(Airplane *airplane, Data *data);
+
+void deleteInList(Airplane *airplane, char *tokey);
+
+
+void printList(Airplane *airplane);
+
+// funções para manipular arquivos
+
+void fromFileToList(Airplane *airplane, char *path);
+void fromListToFileAirplan(Airplane *airplane, char *path);
+
+////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////
+
+// Funções e estruturas para gerar e manipular rotas aereas
+
+const char Estados[][3] = {"AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"};
+
+
+
+typedef struct DataRoutes{
+    char aviaoTokey[51];
+    char AviaoEmpresa[50];
+    int lugaresMax;
+    char origem[3];
+    char destino[3];
+    time_t dateLeave;
+    time_t dateArrive;
+}DataRoutes;
+
+typedef struct NoRoutes{
+    DataRoutes *dataRoutes;
+    struct NoRoutes *next;
+}NoRoutes;
+
+typedef struct Routes{
+    NoRoutes *ini;
+    NoRoutes *end;
+    int size;
+}Routes;
+
+
+DataRoutes *createDataRoutes(char *empresa, int lugaresMax, char *tokey, char *origem, char *destino);
+
+void pushToListRoutes(Routes *routes, DataRoutes *dataRoutes);
+
+void pushFromListRoutesToFile(Routes *routes, char *path);
+
+void generateRoute(No *airplane, Routes *routes);
+
+// função principal
+
+int main(){
+    Airplane *airplane = malloc(sizeof(Airplane));
+    if(!airplane){
+        perror("erro ao alocar memória");
+        free(airplane);
+        exit(1);
+    }
+
+    airplane->ini = NULL;
+    airplane->end = NULL;
+    airplane->size = 0;
+
+
+    char path[] = "DB/airplaneM.txt";
+
+    fromFileToList(airplane, path);
+
+    while(true){
+        printf("Escolha uma opcao:\n");
+        printf("1 - Listar avioes\n");
+        printf("2 - Remover aviao\n");
+        printf("3 - Adicionar aviao\n");
+        printf("4 - Sair sem salvar\n");
+        printf("5 - Salvar e sair\n");
+        
+        char op;
+        
+        scanf("%c", &op);
+        while(getchar() != '\n');
+
+        switch(op){
+            
+            case '1':
+                printList(airplane);
+                break;
+            case '2':
+                printf("Digite o tokey do aviao a ser removido: ");
+                char tokey[50];
+                fgets(tokey, 50, stdin);
+                while(getchar() != '\n');
+
+                printf("\nTem certeza que deseja remover o aviao:%s (s/n)?", tokey);
+                
+                char confirm;
+                scanf("%c", &confirm);
+
+                while(getchar() != '\n');
+
+                if(confirm != 's' && confirm != 'S'){
+                    printf("Remocao cancelada\n");
+                    
+                    break;
+                }
+                deleteInList(airplane, tokey);
+                
+
+                break;
+            case '3':
+                char empresa[50];
+                
+                char *Tokey = createTokey(airplane);
+
+                printf("Digite o nome da empresa: ");
+                fgets(empresa, 50, stdin);
+                while(getchar() != '\n');
+
+                Data *data = createData(empresa, 50, Tokey);
+                pushToListAirplane(airplane, data);
+                free(Tokey);
+                printf("Aviao adicionado com sucesso\n");
+                break;
+            case '4':
+                printf("Saindo sem salvar\n");
+                free(airplane);
+                exit(0);
+            case '5':
+                printf("Salvando e saindo\n");
+                fromListToFileAirplan(airplane, path);
+                free(airplane);
+                exit(0);
+            default:
+                printf("Opcao invalida\n");
+                break;
+        }
+        
+    }
+    
+}
+
+
+////////////////////////////////////////////////////
 // funções para manipular lista de avioes
 
 Data *createData(char *empresa, int lugaresMax, char *tokey){
@@ -53,9 +205,9 @@ Data *createData(char *empresa, int lugaresMax, char *tokey){
 }
 
 
-void pushToList(Airplane *airplane, Data *data){
+void pushToListAirplane(Airplane *airplane, Data *data){
    if(!airplane || !data){
-       perror("erro em pushToList");
+       perror("erro em pushToListAirplaneAirplane");
        exit(1);
    }
 
@@ -168,7 +320,7 @@ void fromFileToList(Airplane *airplane, char *path){
         int  maxLugar = atoi(lugaresMax);
 
         Data *data = createData(empresa, maxLugar, tokey);
-        pushToList(airplane, data);
+        pushToListAirplaneAirplane(airplane, data);
     }
 
     fclose(file);
@@ -218,10 +370,10 @@ char *createTokey(Airplane *airplane){
    
     
 }
-void fromListToFile(Airplane *airplane, char *path){
+void fromListToFileAirplan(Airplane *airplane, char *path){
 
     if(!airplane){
-        perror("erro em fromListToFile");
+        perror("erro em fromListToFileAirplan");
         exit(1);
     }
 
@@ -240,94 +392,119 @@ void fromListToFile(Airplane *airplane, char *path){
 }
 
 
+//////////////////////////////////////////////////////
 
-// função principal
 
-int main(){
-    Airplane *airplane = malloc(sizeof(Airplane));
-    if(!airplane){
+
+
+
+
+
+
+/////////////////////////////////////////////////////
+// funções para manipular lista de rotas
+
+DataRoutes *createDataRoutes(char *empresa, int lugaresMax, char *tokey, char *origem, char *destino){
+    if(!empresa || !tokey || !origem || !destino || !dateLeave || !dateArrive){
+        perror("erro em createDataRoutes");
+        return NULL;
+    }
+
+    DataRoutes *dataRoutes = malloc(sizeof(DataRoutes));
+    if(!dataRoutes){
         perror("erro ao alocar memória");
-        free(airplane);
+        return NULL;
+    }
+
+    strcpy(dataRoutes->aviaoTokey, tokey);
+    strcpy(dataRoutes->origem, origem);
+    strcpy(dataRoutes->destino, destino);
+    dataRoutes->lugaresMax = lugaresMax;
+    strcpy(dataRoutes->AviaoEmpresa, empresa);
+    dataRoutes->dateLeave = dateLeave;
+    dataRoutes->dateArrive = dateArrive;
+
+    return dataRoutes;
+}
+
+void pushToListRoutes(Routes *routes, DataRoutes *dataRoutes){
+
+    if(!routes || !dataRoutes){
+        perror("erro em pushToListRoutes");
         exit(1);
     }
 
-    airplane->ini = NULL;
-    airplane->end = NULL;
-    airplane->size = 0;
+    No *new = malloc(sizeof(No));
+    if(!new){
+        perror("erro ao alocar memória");
+        exit(1);
+    }
+
+    new->data = dataRoutes;
+    new->next = NULL;
+
+    if(routes->ini == NULL){
+        routes->ini = new;
+        routes->end = new;
+    }else{
+        routes->end->next = new;
+        routes->end = new;
+    }
+
+    routes->size++;
+
+}
 
 
-    char path[] = "DB/airplaneM.txt";
+void generateRoute(No *airplane, Routes *routes){
 
-    fromFileToList(airplane, path);
+    if(!airplane || !routes){
+        perror("erro em generateRoute");
+        return;
+    }
 
-    while(true){
-        printf("Escolha uma opcao:\n");
-        printf("1 - Listar avioes\n");
-        printf("2 - Remover aviao\n");
-        printf("3 - Adicionar aviao\n");
-        printf("4 - Sair sem salvar\n");
-        printf("5 - Salvar e sair\n");
-        
-        char op;
-        
-        scanf("%c", &op);
-        while(getchar() != '\n');
+    NoRoutes *newRoute = malloc(sizeof(NoRoutes));
+    if(!newRoute){
+        perror("erro ao alocar memória");
+        return;
+    }
 
-        switch(op){
-            
-            case '1':
-                printList(airplane);
-                break;
-            case '2':
-                printf("Digite o tokey do aviao a ser removido: ");
-                char tokey[50];
-                fgets(tokey, 50, stdin);
-                while(getchar() != '\n');
 
-                printf("\nTem certeza que deseja remover o aviao:%s (s/n)?", tokey);
-                
-                char confirm;
-                scanf("%c", &confirm);
-
-                while(getchar() != '\n');
-
-                if(confirm != 's' && confirm != 'S'){
-                    printf("Remocao cancelada\n");
-                    
-                    break;
-                }
-                deleteInList(airplane, tokey);
-                
-
-                break;
-            case '3':
-                char empresa[50];
-                
-                char *Tokey = createTokey(airplane);
-
-                printf("Digite o nome da empresa: ");
-                fgets(empresa, 50, stdin);
-                while(getchar() != '\n');
-
-                Data *data = createData(empresa, 50, Tokey);
-                pushToList(airplane, data);
-                free(Tokey);
-                printf("Aviao adicionado com sucesso\n");
-                break;
-            case '4':
-                printf("Saindo sem salvar\n");
-                free(airplane);
-                exit(0);
-            case '5':
-                printf("Salvando e saindo\n");
-                fromListToFile(airplane, path);
-                free(airplane);
-                exit(0);
-            default:
-                printf("Opcao invalida\n");
-                break;
+    int origemIndex  = 0;
+    int destinoIndex = 0;
+    while (true){
+        origemIndex  = rand() % 26;
+        destinoIndex = rand() % 26;
+        if(origemIndex != destinoIndex){
+            break;
         }
-        
     }
     
+    strcpy(newRoute->dataRoutes->aviaoTokey, airplane->data->tokey);
+    strcpy(newRoute->dataRoutes->AviaoEmpresa, airplane->data->empresa);
+    strcpy(newRoute->dataRoutes->origem, Estados[origemIndex]);
+    strcpy(newRoute->dataRoutes->destino, Estados[destinoIndex]);
+    
+
+    newRoute->next = NULL;
+}
+void pushFromListRoutesToFile(Routes *routes, char *path){
+
+    if(!routes){
+        perror("erro em pushFromListRoutesToFile");
+        exit(1);
+    }
+
+    FILE *file = fopen(path, "w");
+    if(!file){
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+
+    No *current = routes->ini;
+    while(current != NULL){
+        fprintf(file, "%s\n%s\n%s\n%s\n%s\n", current->data->aviaoTokey, current->data->AviaoEmpresa, current->data->origem, current->data->destino, current->data->data->date);
+        current = current->next;
+    }
+    fclose(file);
 }
