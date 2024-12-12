@@ -37,13 +37,13 @@ void pushToListAirplane(Airplane *airplane, Data *data);
 
 void deleteInList(Airplane *airplane, char *tokey);
 
-
+char *createTokey(Airplane *airplane);
 void printList(Airplane *airplane);
 
 // funções para manipular arquivos
 
 void fromFileToList(Airplane *airplane, char *path);
-void fromListToFileAirplan(Airplane *airplane, char *path);
+void fromListToFileAirplane(Airplane *airplane, char *path);
 
 ////////////////////////////////////////////////////
 
@@ -73,22 +73,22 @@ typedef struct NoRoutes{
 typedef struct Routes{
     NoRoutes *ini;
     NoRoutes *end;
-    int size;
 }Routes;
 
 
-DataRoutes *createDataRoutes(char *empresa, int lugaresMax, char *tokey, char *origem, char *destino);
 
-void pushToListRoutes(Routes *routes, DataRoutes *dataRoutes);
 
 void pushFromListRoutesToFile(Routes *routes, char *path);
 
 void generateRoute(No *airplane, Routes *routes);
 
+void freeListRoutes(Routes **routes);
+
 // função principal
 
 int main(){
     Airplane *airplane = malloc(sizeof(Airplane));
+    srand(time(NULL));
     if(!airplane){
         perror("erro ao alocar memória");
         free(airplane);
@@ -109,8 +109,9 @@ int main(){
         printf("1 - Listar avioes\n");
         printf("2 - Remover aviao\n");
         printf("3 - Adicionar aviao\n");
-        printf("4 - Sair sem salvar\n");
-        printf("5 - Salvar e sair\n");
+        printf("4 - Gerar rotas\n");
+        printf("5 - sair\n");
+
         
         char op;
         
@@ -159,12 +160,34 @@ int main(){
                 printf("Aviao adicionado com sucesso\n");
                 break;
             case '4':
-                printf("Saindo sem salvar\n");
-                free(airplane);
-                exit(0);
+                Routes *routes = malloc(sizeof(Routes));
+                if(!routes){
+                    perror("erro ao alocar memória");
+                    free(routes);
+                    exit(1);
+                }
+
+                routes->ini = NULL;
+                routes->end = NULL;
+
+                char pathRoutes[] = "DB/Routes.txt";
+
+                No *current = airplane->ini;
+                printf("\nGerando rotas\n");
+                while(current){
+                    generateRoute(current, routes);
+                    current = current->next;
+
+                }
+
+                printf("\nRotas geradas com sucesso\n");
+                pushFromListRoutesToFile(routes, pathRoutes);
+                freeListRoutes(&routes);
+                break;
+            
             case '5':
                 printf("Salvando e saindo\n");
-                fromListToFileAirplan(airplane, path);
+                fromListToFileAirplane(airplane, path);
                 free(airplane);
                 exit(0);
             default:
@@ -207,7 +230,7 @@ Data *createData(char *empresa, int lugaresMax, char *tokey){
 
 void pushToListAirplane(Airplane *airplane, Data *data){
    if(!airplane || !data){
-       perror("erro em pushToListAirplaneAirplane");
+       perror("erro em pushToListAirplane");
        exit(1);
    }
 
@@ -320,7 +343,7 @@ void fromFileToList(Airplane *airplane, char *path){
         int  maxLugar = atoi(lugaresMax);
 
         Data *data = createData(empresa, maxLugar, tokey);
-        pushToListAirplaneAirplane(airplane, data);
+        pushToListAirplane(airplane, data);
     }
 
     fclose(file);
@@ -370,10 +393,10 @@ char *createTokey(Airplane *airplane){
    
     
 }
-void fromListToFileAirplan(Airplane *airplane, char *path){
+void fromListToFileAirplane(Airplane *airplane, char *path){
 
     if(!airplane){
-        perror("erro em fromListToFileAirplan");
+        perror("erro em fromListToFileAirplane");
         exit(1);
     }
 
@@ -404,56 +427,6 @@ void fromListToFileAirplan(Airplane *airplane, char *path){
 /////////////////////////////////////////////////////
 // funções para manipular lista de rotas
 
-DataRoutes *createDataRoutes(char *empresa, int lugaresMax, char *tokey, char *origem, char *destino){
-    if(!empresa || !tokey || !origem || !destino || !dateLeave || !dateArrive){
-        perror("erro em createDataRoutes");
-        return NULL;
-    }
-
-    DataRoutes *dataRoutes = malloc(sizeof(DataRoutes));
-    if(!dataRoutes){
-        perror("erro ao alocar memória");
-        return NULL;
-    }
-
-    strcpy(dataRoutes->aviaoTokey, tokey);
-    strcpy(dataRoutes->origem, origem);
-    strcpy(dataRoutes->destino, destino);
-    dataRoutes->lugaresMax = lugaresMax;
-    strcpy(dataRoutes->AviaoEmpresa, empresa);
-    dataRoutes->dateLeave = dateLeave;
-    dataRoutes->dateArrive = dateArrive;
-
-    return dataRoutes;
-}
-
-void pushToListRoutes(Routes *routes, DataRoutes *dataRoutes){
-
-    if(!routes || !dataRoutes){
-        perror("erro em pushToListRoutes");
-        exit(1);
-    }
-
-    No *new = malloc(sizeof(No));
-    if(!new){
-        perror("erro ao alocar memória");
-        exit(1);
-    }
-
-    new->data = dataRoutes;
-    new->next = NULL;
-
-    if(routes->ini == NULL){
-        routes->ini = new;
-        routes->end = new;
-    }else{
-        routes->end->next = new;
-        routes->end = new;
-    }
-
-    routes->size++;
-
-}
 
 
 void generateRoute(No *airplane, Routes *routes){
@@ -468,6 +441,7 @@ void generateRoute(No *airplane, Routes *routes){
         perror("erro ao alocar memória");
         return;
     }
+   
 
 
     int origemIndex  = 0;
@@ -479,17 +453,43 @@ void generateRoute(No *airplane, Routes *routes){
             break;
         }
     }
-    
+
+    newRoute->dataRoutes = malloc(sizeof(DataRoutes));
+    if(!newRoute->dataRoutes){
+        perror("erro ao alocar memória");
+        return;
+    }
+
     strcpy(newRoute->dataRoutes->aviaoTokey, airplane->data->tokey);
     strcpy(newRoute->dataRoutes->AviaoEmpresa, airplane->data->empresa);
     strcpy(newRoute->dataRoutes->origem, Estados[origemIndex]);
     strcpy(newRoute->dataRoutes->destino, Estados[destinoIndex]);
+
+
     
+    
+    time_t agora = time(NULL);
+    newRoute->dataRoutes->dateLeave = agora + (rand() % 31536000); // Até 1 ano no futuro
 
+    // Garantir que dateArrive é entre 3 e 9 horas após dateLeave
+    newRoute->dataRoutes->dateArrive = newRoute->dataRoutes->dateLeave + 10800 + (rand() % 21601);
+
+
+   
+   
     newRoute->next = NULL;
-}
-void pushFromListRoutesToFile(Routes *routes, char *path){
 
+    if(routes->ini == NULL){
+        routes->ini = newRoute;
+        routes->end = newRoute;
+    }else{
+        routes->end->next = newRoute;
+        routes->end = newRoute;
+    }
+}
+
+
+void pushFromListRoutesToFile(Routes *routes, char *path){
     if(!routes){
         perror("erro em pushFromListRoutesToFile");
         exit(1);
@@ -501,10 +501,32 @@ void pushFromListRoutesToFile(Routes *routes, char *path){
         return;
     }
 
-    No *current = routes->ini;
+    NoRoutes *current = routes->ini;
+    
     while(current != NULL){
-        fprintf(file, "%s\n%s\n%s\n%s\n%s\n", current->data->aviaoTokey, current->data->AviaoEmpresa, current->data->origem, current->data->destino, current->data->data->date);
+
+        
+        fprintf(file, "%s\n%s\n%s\n%s\n%s%s", 
+                current->dataRoutes->aviaoTokey, 
+                current->dataRoutes->AviaoEmpresa, 
+                current->dataRoutes->origem, 
+                current->dataRoutes->destino, 
+                ctime(&current->dataRoutes->dateLeave), 
+                ctime(&current->dataRoutes->dateArrive));
         current = current->next;
     }
     fclose(file);
+}
+
+void freeListRoutes(Routes **routes){
+    NoRoutes *current = (*routes)->ini;
+
+    while(current != NULL){
+        NoRoutes *next = current->next;
+        free(current->dataRoutes);
+        free(current);
+        current = next;
+    }
+
+    free((*routes));
 }
