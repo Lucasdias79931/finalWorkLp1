@@ -95,6 +95,7 @@ void fromFileToClientList(ClienteList *cliente, char *path){
         fgets(telefone, 15, file);
         fgets(idade, 15, file);
         fgets(password, 50, file);
+        
         strtok(nome, "\n");
         strtok(cpf, "\n");
         strtok(email, "\n");
@@ -124,7 +125,10 @@ bool verifyCpf(ClienteList *cliente, char *cpf){
 bool verifyPassword(ClienteList *cliente, char *cpf, char *password){
     NoCliente *current = cliente->ini;
     while(current != NULL){
+        
         if(strcmp(current->data->cpf, cpf) == 0 && strcmp(current->data->password, password) == 0){
+            printf("Logado com sucesso\n");
+            exit(1);
             return true;
         }
         current = current->next;
@@ -147,11 +151,13 @@ void deleteClient(ClienteList *cliente, char *cpf){
             }
             free(current->data);
             free(current);
+            printf("Cliente removido com sucesso\n");
             return;
         }
         prev = current;
         current = current->next;
     }
+    printf("Cliente nao encontrado\n");
 }
 
 void fromListToFileClient(ClienteList *cliente, char *path){
@@ -169,14 +175,23 @@ void fromListToFileClient(ClienteList *cliente, char *path){
    
 
     NoCliente *current = cliente->ini;
+   
     
     while(current != NULL){
-        fprintf(file, "%s\n%s\n%s\n%s\n%s\n%s", current->data->nome, current->data->cpf, current->data->email, current->data->telefone, current->data->idade, current->data->password);
+        fprintf(file, "%s\n%s\n%s\n%s\n%s\n%s\n", current->data->nome, current->data->cpf, current->data->email, current->data->telefone, current->data->idade, current->data->password);
         current = current->next;
     }
     fclose(file);
 }
-
+void freeClientList(ClienteList *cliente){
+    NoCliente *current = cliente->ini;
+    while(current != NULL){
+        NoCliente *next = current->next;
+        free(current->data);
+        free(current);
+        current = next;
+    }
+}
 
 int main(){
     ClienteList *clients = malloc(sizeof(ClienteList));
@@ -198,7 +213,9 @@ int main(){
         printf("Escolha uma opcao:\n");
         printf("1 - logar\n");
         printf("2 - cadastrar\n");
-        printf("3 - sair\n");
+        printf("3 - deletar\n");
+        printf("4 - sair sem salvar\n");
+        printf("5 - salvar e sair\n");
         bool next = false;
         char op;
         scanf("%c", &op);
@@ -206,22 +223,38 @@ int main(){
         
         switch(op){
             case '1':
-                
-                
+                char Password[50];
+                char Cpf[15];
+
+                printf("Digite o cpf: ");
+                fgets(Cpf, 15, stdin);
+                while(getchar() != '\n');
+                printf("Digite a senha: ");
+                fgets(Password, 50, stdin);
+                while(getchar() != '\n');
+
+                strtok(Cpf, "\n");
+                strtok(Password, "\n");
+                if(verifyPassword(clients, Cpf, Password) == true){
+                    printf("Logado com sucesso\n");
+                    next = true;
+                }else{
+                    printf("Cpf ou senha incorretos\n");
+                }
                 break;
             case '2':
                 char nome[100];
-                char cpf[12];
+                char cpf[15];
                 char email[100];
-                char telefone[12];
-                char idade[10];
+                char telefone[15];
+                char idade[15];
                 char password[50];
 
                 printf("Digite o nome: ");
                 fgets(nome, 100, stdin);
-                while(getchar() != '\n');
+                while(getchar() != '\n' );
                 printf("Digite o cpf: ");
-                fgets(cpf, 12, stdin);
+                fgets(cpf, 15, stdin);
                 if(verifyCpf(clients, cpf) == true){
                     printf("Cpf ja cadastrado\n");
                     break;
@@ -232,15 +265,16 @@ int main(){
                 fgets(email, 100, stdin);
                 while(getchar() != '\n');
                 printf("Digite o telefone: ");
-                fgets(telefone, 12, stdin);
+                fgets(telefone, 15, stdin);
                 while(getchar() != '\n');
                 printf("Digite a idade: ");
-                fgets(idade, 10, stdin);
+                fgets(idade, 15, stdin);
                 while(getchar() != '\n');
                 printf("Digite a senha: ");
                 fgets(password, 50, stdin);
                 while(getchar() != '\n');
 
+                
                 strtok(nome, "\n");
                 strtok(cpf, "\n");
                 strtok(email, "\n");
@@ -254,9 +288,22 @@ int main(){
 
                 break;
             case '3':
-                fromListToFileClient(clients, path);
-                free(clients);
+                char delCpf[15];
+                printf("Digite o cpf: ");
+                fgets(delCpf, 15, stdin);
+                while(getchar() != '\n');
+                strtok(delCpf, "\n");
+                
+                deleteClient(clients, delCpf);
+                break;
+            case '4':
                 exit(0);
+                break;
+            case '5':
+                fromListToFileClient(clients, path);
+                freeClientList(clients);
+                exit(0);
+                break;
             default:
                 printf("Opcao invalida\n");
                 break;
