@@ -193,6 +193,163 @@ void freeClientList(ClienteList *cliente){
     }
 }
 
+// Estruturas e funçãos para manipular dados das rotas
+
+typedef struct DataRoutes{
+    char aviaoTokey[51];
+    char AviaoEmpresa[50];
+    int lugaresMax;
+    int lugaresDisponiveis;
+    char origem[3];
+    char destino[3];
+    time_t dateLeave;
+    time_t dateArrive;
+}DataRoutes;
+
+typedef struct NoRoutes{
+    DataRoutes *dataRoutes;
+    struct NoRoutes *next;
+}NoRoutes;
+
+typedef struct Routes{
+    NoRoutes *ini;
+    NoRoutes *end;
+}Routes;
+
+void pushToListRoutes(Routes *routes, DataRoutes *data){
+    if (routes == NULL)
+    {
+        perror("erro em pushToListRoutes");
+        exit(1);
+    }
+    
+    
+    NoRoutes *newRoute = malloc(sizeof(NoRoutes));
+    if(!newRoute){
+        perror("erro ao alocar memória");
+        return;
+    }
+    newRoute->dataRoutes = data;
+    newRoute->next = NULL;
+    if(routes->ini == NULL){
+        routes->ini = newRoute;
+        routes->end = newRoute;
+    }else{
+        routes->end->next = newRoute;
+        routes->end = newRoute;
+    }
+}
+void fromFileToListRoutes(Routes *routes, char *path){
+    FILE *file = fopen(path, "r");
+    if(!file){
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+
+    char aviaoTokey[51];
+    int lugaresMax;
+    int lugaresDisponiveis;
+    char AviaoEmpresa[50];
+    char origem[3];
+    char destino[3];
+    char dateLeave[50];
+    char dateArrive[50];
+    /* 
+        le os dados do arquivo e armazena em uma struct Data
+        depois armazena a struct na lista principal que será manipulada pelo usuário
+    */
+    while(fgets(aviaoTokey, 51, file) != NULL){
+        char lugaresM[4];
+        char lugaresD[4];
+        fgets(lugaresM, 4, file);
+        fgets(lugaresD, 4, file);
+        fgets(AviaoEmpresa, 50, file);
+        fgets(origem, 3, file);
+        fgets(destino, 3, file);
+        fgets(dateLeave, 50, file);
+        fgets(dateArrive, 50, file);
+
+        strtok(aviaoTokey, "\n");
+        strtok(lugaresM, "\n");
+        strtok(lugaresD, "\n");
+        strtok(AviaoEmpresa, "\n");
+        strtok(origem, "\n");
+        strtok(destino, "\n");
+        strtok(dateLeave, "\n");
+        strtok(dateArrive, "\n");
+
+        int  maxLugar = atoi(lugaresM);
+        int  lugaresDisp = atoi(lugaresD);
+        DataRoutes *data = createDataRoutes(aviaoTokey, AviaoEmpresa, maxLugar, lugaresDisp, origem, destino, dateLeave, dateArrive);
+        pushToListRoutes(routes, data);
+
+
+    }
+}
+
+void fromListToFileRoutes(Routes *routes, char *path){
+
+    if(!routes){
+        perror("erro em fromListToFileRoutes");
+        exit(1);
+    }
+
+    FILE *file = fopen(path, "w");
+    if(!file){
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+
+    NoRoutes *current = routes->ini;
+    while(current != NULL){
+        fprintf(file, "%s\n%s,\n%i\n%i\n%s\n%s\n%s%s", 
+                current->dataRoutes->aviaoTokey, 
+                current->dataRoutes->AviaoEmpresa, 
+                current->dataRoutes->lugaresMax,
+                current->dataRoutes->lugaresDisponiveis,
+                current->dataRoutes->origem, 
+                current->dataRoutes->destino, 
+                ctime(&current->dataRoutes->dateLeave), 
+                ctime(&current->dataRoutes->dateArrive));
+        current = current->next;
+    }
+    fclose(file);
+}
+
+
+void printByRegion(int region){
+    switch (region){
+    case 1:
+        printf("Região Nordeste\n");
+        printf("al (Alagoas)\tba (Bahia)\tce (Ceará)\tpb (Paraíba)\tpi (Piauí)\trn (Rio Grande do Norte)\tpe (Pernambuco)\n");
+        printf("ma (Maranhão)\tse (Sergipe)");
+        break;
+    
+    case 2:
+        printf("Região Norte\n");
+        printf("ac (Acre)\tam (Amazonas)\tap (Amapá)\tma (Maranhão não, apenas para o norte, é o Amapá, Amazonas, Acre, Roraima, Rondônia, Tocantins e Pará)\tpa (Pará)\trr (Roraima)\tror (Rondônia)\tto (Tocantins)");
+        break;
+    
+    case 3:
+        printf("Região Sul\n");
+        printf("pr (Paraná)\trs (Rio Grande do Sul)\tsc (Santa Catarina)");
+        break;
+    
+    case 4:
+        printf("Região Sudeste\n");
+        printf("es (Espírito Santo)\tmg (Minas Gerais)\trj (Rio de Janeiro)\tspe (São Paulo)");
+        break;
+    
+    case 5:
+        printf("Região Centro-Oeste\n");
+        printf("df (Distrito Federal)\tgo (Goiás)\tms (Mato Grosso)\tmt (Mato Grosso do Sul)");
+        break;
+    
+    default:
+        printf("Região inválida");
+        break;
+    }
+}
 int main(){
     ClienteList *clients = malloc(sizeof(ClienteList));
     if(!clients){
@@ -311,6 +468,25 @@ int main(){
 
         if(next)break;
     }
+
+
+    while (true){
+        char leave[3];
+        char arrive[3];
+        bool idaVolta = false;
+        char op;
+
+        printf("Escolha uma opcao:\n");
+        printf("1 - ida e volta\n");
+        printf("2 - somente ida\n");
+        printf("4 - sair\n");
+        scanf("%c", &op);
+        while (getchar() != '\n');
+        
+        
+        
+    }
+    
  
     return 0;
 }

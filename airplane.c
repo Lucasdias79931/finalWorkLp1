@@ -59,6 +59,7 @@ typedef struct DataRoutes{
     char aviaoTokey[51];
     char AviaoEmpresa[50];
     int lugaresMax;
+    int lugaresDisponiveis;
     char origem[3];
     char destino[3];
     time_t dateLeave;
@@ -460,6 +461,8 @@ void generateRoute(No *airplane, Routes *routes){
         return;
     }
 
+    newRoute->dataRoutes->lugaresMax = 50;
+    newRoute->dataRoutes->lugaresDisponiveis = 50;
     strcpy(newRoute->dataRoutes->aviaoTokey, airplane->data->tokey);
     strcpy(newRoute->dataRoutes->AviaoEmpresa, airplane->data->empresa);
     strcpy(newRoute->dataRoutes->origem, Estados[origemIndex]);
@@ -506,9 +509,11 @@ void pushFromListRoutesToFile(Routes *routes, char *path){
     while(current != NULL){
 
         
-        fprintf(file, "%s\n%s\n%s\n%s\n%s%s", 
+        fprintf(file, "%s\n%s,\n%i\n%i\n%s\n%s\n%s%s", 
                 current->dataRoutes->aviaoTokey, 
                 current->dataRoutes->AviaoEmpresa, 
+                current->dataRoutes->lugaresMax,
+                current->dataRoutes->lugaresDisponiveis,
                 current->dataRoutes->origem, 
                 current->dataRoutes->destino, 
                 ctime(&current->dataRoutes->dateLeave), 
