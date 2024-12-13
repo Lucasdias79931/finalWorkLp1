@@ -2,145 +2,268 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 
 
-//Estruturas para os usuários
+// Estruturas e funçãos para manipular dados do cliente
 
-typedef struct Date{
-    char  day[3];
-    char  month[3];
-    char  year[5];
-}Date;
 
 typedef struct Data{
-    Date date;
-    char name[100];
+    char nome[100];
+    char cpf[15];
     char email[100];
-    char cpf[12];
+    char telefone[15];
+    char idade[15];
     char password[50];
 }Data;
 
-typedef struct No{
+typedef struct noCliente{
     Data *data;
-    struct No *next;
-}No;
+    struct noCliente *next;
+}NoCliente;
 
+typedef struct Cliente{
+    NoCliente *ini;
+    NoCliente *end;
+}ClienteList;
 
-typedef struct Users{
-    No *ini;
-    No *end;
-    int size;   
-}Users;
-
-Data *creatUser(){
-    Data *user = malloc(sizeof(Data));
-    if(!user){
+Data *createData(char *nome, char *cpf, char *email, char *telefone, char *idade, char *password){
+    Data *data = malloc(sizeof(Data));
+    if(!data){
         perror("erro ao alocar memória");
+        free(data);
         return NULL;
     }
 
-    printf("Digite o seu nome\n");
-    fgets(user->name,100,stdin);
-    while(getchar() != '\n');
+    strcpy(data->nome, nome);
+    strcpy(data->cpf, cpf);
+    strcpy(data->email, email);
+    strcpy(data->telefone, telefone);
+    strcpy(data->idade, idade);
+    strcpy(data->password, password);
 
-    printf("Digite o seu e-mail\n");
-    fgets(user->email,100,stdin);
-    while(getchar() != '\n');
-
-    return user;
+    return data;
 }
+void pushToListClient(ClienteList *cliente, Data *data){
 
-
-// retorna false se cpf já estiver cadastrada
-bool veirfyCpf(char *cpf, Users *user){
-    if(user->size == 0){
-        return true;
+    if(!cliente || !data){
+        perror("erro em pushToListClient");
+        exit(1);
     }
 
-    No *current = user->ini;
-
-    while (current)
-    {
-        if(strcmp(current->data->cpf, cpf) == 0)return false;
-        current = current->next;
-    }
-
-    return false;
-    
-
-}
-
-// retorna false se password já estiver cadastrada
-bool veirfyPass(char *pass, Users *user){
-    if(user->size == 0){
-        return true;
-    }
-
-    No *current = user->ini;
-
-    while (current)
-    {
-        if(strcmp(current->data->password, pass) == 0)return false;
-        current = current->next;
-    }
-
-    return false;
-    
-
-}
-
-
-
-void pushUsers(Users *users, Data *data){
-    if(!users){
-        perror("Erro em pushUsers");
-        return;
-    }
-
-    No *new = malloc(sizeof(No));
+    NoCliente *new = malloc(sizeof(NoCliente));
     if(!new){
-        perror("erro de alocação!");
-        free(new);
-        return;
+        perror("erro ao alocar memória");
+        exit(1);
     }
 
     new->data = data;
+    new->next = NULL;
 
-    whiel(true){
-        printf("Digite o seu cpf\n");
-        fgets(data->cpf,12,stdin);
-        while(getchar() != '\n');
-
-        if(!veirfyCpf(data->cpf)){
-            printf("cpf já existe!");
-            continue;
-        }
-
-        break;
-       
-    }
-
-    while (true){
-        printf("Digite a sua senha com até 49 caracteresl\n");
-        fgets(data->password,50,stdin);
-        while(getchar() != '\n');
-
-        if(!veirfyPass(data->password)){
-            printf("senha já existe!");
-            continue;
-        }
-
-        break;
-    }
-    
-
-
-
-    if(users->end){
-        users->end->next = new;
-        users->end = new;
+    if(!cliente->ini){
+        cliente->ini = new;
+        cliente->end = new;
     }else{
-        users->ini = new;
-        users->end = new;
+        cliente->end->next = new;
+        cliente->end = new;
     }
+}
+
+void fromFileToClientList(ClienteList *cliente, char *path){
+
+    if(!cliente){
+        perror("erro em fromFileToClientList");
+        exit(1);
+    }
+
+    FILE *file = fopen(path, "r");
+    if(!file){
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+
+    char nome[100];
+    char cpf[15];
+    char email[100];
+    char telefone[15];
+    char idade[15];
+    char password[50];
+
+    while(fgets(nome, 100, file) != NULL){
+        fgets(cpf, 15, file);
+        fgets(email, 100, file);
+        fgets(telefone, 15, file);
+        fgets(idade, 15, file);
+        fgets(password, 50, file);
+        strtok(nome, "\n");
+        strtok(cpf, "\n");
+        strtok(email, "\n");
+        strtok(telefone, "\n");
+        strtok(idade, "\n");
+        strtok(password, "\n");
+        Data *data = createData(nome, cpf, email, telefone, idade, password);
+        pushToListClient(cliente, data);
+    }
+    fclose(file);
+
+}
+
+// retorna true se o cpf for encontrado
+bool verifyCpf(ClienteList *cliente, char *cpf){
+    NoCliente *current = cliente->ini;
+    while(current != NULL){
+        if(strcmp(current->data->cpf, cpf) == 0){
+            return true;
+        }
+        current = current->next;
+    }
+    return false;
+}
+
+// retorna true se o cpf e a senha forem encontrados
+bool verifyPassword(ClienteList *cliente, char *cpf, char *password){
+    NoCliente *current = cliente->ini;
+    while(current != NULL){
+        if(strcmp(current->data->cpf, cpf) == 0 && strcmp(current->data->password, password) == 0){
+            return true;
+        }
+        current = current->next;
+    }
+    return false;
+}
+
+
+void deleteClient(ClienteList *cliente, char *cpf){
+
+    NoCliente *current = cliente->ini;
+    NoCliente *prev = NULL;
+
+    while(current != NULL){
+        if(strcmp(current->data->cpf, cpf) == 0){
+            if(prev == NULL){
+                cliente->ini = current->next;
+            }else{
+                prev->next = current->next;
+            }
+            free(current->data);
+            free(current);
+            return;
+        }
+        prev = current;
+        current = current->next;
+    }
+}
+
+void fromListToFileClient(ClienteList *cliente, char *path){
+
+    if(!cliente){
+        perror("erro em fromListToFileClient");
+        exit(1);
+    }
+
+    FILE *file = fopen(path, "w");
+    if(!file){
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+   
+
+    NoCliente *current = cliente->ini;
+    
+    while(current != NULL){
+        fprintf(file, "%s\n%s\n%s\n%s\n%s\n%s", current->data->nome, current->data->cpf, current->data->email, current->data->telefone, current->data->idade, current->data->password);
+        current = current->next;
+    }
+    fclose(file);
+}
+
+
+int main(){
+    ClienteList *clients = malloc(sizeof(ClienteList));
+    if(!clients){
+        perror("erro ao alocar memória");
+        free(clients);
+        exit(1);
+    }
+
+    clients->ini = NULL;
+    clients->end = NULL;
+
+
+    char path[] = "DB/clientes.txt";
+
+    fromFileToClientList(clients, path);
+
+    while(true){
+        printf("Escolha uma opcao:\n");
+        printf("1 - logar\n");
+        printf("2 - cadastrar\n");
+        printf("3 - sair\n");
+        bool next = false;
+        char op;
+        scanf("%c", &op);
+        while (getchar() != '\n');
+        
+        switch(op){
+            case '1':
+                
+                
+                break;
+            case '2':
+                char nome[100];
+                char cpf[12];
+                char email[100];
+                char telefone[12];
+                char idade[10];
+                char password[50];
+
+                printf("Digite o nome: ");
+                fgets(nome, 100, stdin);
+                while(getchar() != '\n');
+                printf("Digite o cpf: ");
+                fgets(cpf, 12, stdin);
+                if(verifyCpf(clients, cpf) == true){
+                    printf("Cpf ja cadastrado\n");
+                    break;
+                }
+
+                while(getchar() != '\n');
+                printf("Digite o email: ");
+                fgets(email, 100, stdin);
+                while(getchar() != '\n');
+                printf("Digite o telefone: ");
+                fgets(telefone, 12, stdin);
+                while(getchar() != '\n');
+                printf("Digite a idade: ");
+                fgets(idade, 10, stdin);
+                while(getchar() != '\n');
+                printf("Digite a senha: ");
+                fgets(password, 50, stdin);
+                while(getchar() != '\n');
+
+                strtok(nome, "\n");
+                strtok(cpf, "\n");
+                strtok(email, "\n");
+                strtok(telefone, "\n");
+                strtok(idade, "\n");
+                strtok(password, "\n");
+
+                Data *data = createData(nome, cpf, email, telefone, idade, password);
+                pushToListClient(clients, data);
+
+
+                break;
+            case '3':
+                fromListToFileClient(clients, path);
+                free(clients);
+                exit(0);
+            default:
+                printf("Opcao invalida\n");
+                break;
+        }
+
+        if(next)break;
+    }
+ 
+    return 0;
 }
