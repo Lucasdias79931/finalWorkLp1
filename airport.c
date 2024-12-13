@@ -202,8 +202,8 @@ typedef struct DataRoutes{
     int lugaresDisponiveis;
     char origem[3];
     char destino[3];
-    time_t dateLeave;
-    time_t dateArrive;
+    char dateLeave[50];
+    char dateArrive[50];
 }DataRoutes;
 
 typedef struct NoRoutes{
@@ -216,6 +216,22 @@ typedef struct Routes{
     NoRoutes *end;
 }Routes;
 
+DataRoutes *createDataRoutes(char *aviaoTokey, char *AviaoEmpresa, int maxLugar, int lugaresDisp, char *origem, char *destino, char *dateLeave, char *dateArrive){
+    DataRoutes *data = malloc(sizeof(DataRoutes));
+    if(!data){
+        perror("erro ao alocar memória");
+        return NULL;
+    }
+    strcpy(data->aviaoTokey, aviaoTokey);
+    strcpy(data->AviaoEmpresa, AviaoEmpresa);
+    data->lugaresMax = maxLugar;
+    data->lugaresDisponiveis = lugaresDisp;
+    strcpy(data->origem, origem);
+    strcpy(data->destino, destino);
+    strcpy(data->dateLeave, dateLeave);
+    strcpy(data->dateArrive, dateArrive);
+    return data;
+}
 void pushToListRoutes(Routes *routes, DataRoutes *data){
     if (routes == NULL)
     {
@@ -250,22 +266,23 @@ void fromFileToListRoutes(Routes *routes, char *path){
     int lugaresMax;
     int lugaresDisponiveis;
     char AviaoEmpresa[50];
-    char origem[3];
-    char destino[3];
+    char origem[4];
+    char destino[4];
     char dateLeave[50];
     char dateArrive[50];
     /* 
         le os dados do arquivo e armazena em uma struct Data
         depois armazena a struct na lista principal que será manipulada pelo usuário
+
     */
     while(fgets(aviaoTokey, 51, file) != NULL){
         char lugaresM[4];
         char lugaresD[4];
+        fgets(AviaoEmpresa, 50, file);
         fgets(lugaresM, 4, file);
         fgets(lugaresD, 4, file);
-        fgets(AviaoEmpresa, 50, file);
-        fgets(origem, 3, file);
-        fgets(destino, 3, file);
+        fgets(origem, 4, file);
+        fgets(destino, 4, file);
         fgets(dateLeave, 50, file);
         fgets(dateArrive, 50, file);
 
@@ -278,6 +295,7 @@ void fromFileToListRoutes(Routes *routes, char *path){
         strtok(dateLeave, "\n");
         strtok(dateArrive, "\n");
 
+        
         int  maxLugar = atoi(lugaresM);
         int  lugaresDisp = atoi(lugaresD);
         DataRoutes *data = createDataRoutes(aviaoTokey, AviaoEmpresa, maxLugar, lugaresDisp, origem, destino, dateLeave, dateArrive);
@@ -309,8 +327,8 @@ void fromListToFileRoutes(Routes *routes, char *path){
                 current->dataRoutes->lugaresDisponiveis,
                 current->dataRoutes->origem, 
                 current->dataRoutes->destino, 
-                ctime(&current->dataRoutes->dateLeave), 
-                ctime(&current->dataRoutes->dateArrive));
+                current->dataRoutes->dateLeave, 
+                current->dataRoutes->dateArrive);
         current = current->next;
     }
     fclose(file);
@@ -350,6 +368,26 @@ void printByRegion(int region){
         break;
     }
 }
+
+void printAllRoutes(Routes *routes){
+    if(!routes){
+        perror("erro em printAllRoutes");
+        exit(1);
+    }
+    NoRoutes *current = routes->ini;
+    while(current != NULL){
+        printf("%s\n%s,\n%i\n%i\n%s\n%s\n%s\n%s\n", 
+                current->dataRoutes->aviaoTokey, 
+                current->dataRoutes->AviaoEmpresa, 
+                current->dataRoutes->lugaresMax,
+                current->dataRoutes->lugaresDisponiveis,
+                current->dataRoutes->origem, 
+                current->dataRoutes->destino, 
+                current->dataRoutes->dateLeave, 
+                current->dataRoutes->dateArrive);
+        current = current->next;
+    }
+}
 int main(){
     ClienteList *clients = malloc(sizeof(ClienteList));
     if(!clients){
@@ -365,7 +403,7 @@ int main(){
     char path[] = "DB/clientes.txt";
 
     fromFileToClientList(clients, path);
-
+    /*
     while(true){
         printf("Escolha uma opcao:\n");
         printf("1 - logar\n");
@@ -468,8 +506,24 @@ int main(){
 
         if(next)break;
     }
+    */
+    char pathRoutes[] = "DB/Routes.txt";
 
+    Routes *routes = malloc(sizeof(Routes));
+    if(!routes){
+        perror("erro ao alocar memória");
+        free(routes);
+        exit(1);
+    }
 
+    routes->ini = NULL;
+    routes->end = NULL;
+    
+    fromFileToListRoutes(routes, pathRoutes);
+
+    printAllRoutes(routes);
+    
+    
     while (true){
         char leave[3];
         char arrive[3];
@@ -479,9 +533,28 @@ int main(){
         printf("Escolha uma opcao:\n");
         printf("1 - ida e volta\n");
         printf("2 - somente ida\n");
-        printf("4 - sair\n");
+        printf("4 - Listar passagens compradas\n");
+        printf("5 - sair\n");
         scanf("%c", &op);
         while (getchar() != '\n');
+
+        switch(op){
+            case '1':
+                idaVolta = true;
+                break;
+            case '2':
+                idaVolta = false;
+                break;
+            case '4':
+                
+                break;
+            case '5':
+                exit(0);
+                break;
+            default:
+                printf("Opcao invalida\n");
+                break;
+        }
         
         
         
