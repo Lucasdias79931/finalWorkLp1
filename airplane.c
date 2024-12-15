@@ -471,15 +471,14 @@ void generateRoute(No *airplane, Routes *routes){
 
     
     
-    time_t agora = time(NULL);
-    newRoute->dataRoutes->dateLeave = agora + (rand() % 31536000); // Até 1 ano no futuro
-
-    // Garantir que dateArrive é entre 3 e 9 horas após dateLeave
-    newRoute->dataRoutes->dateArrive = newRoute->dataRoutes->dateLeave + 10800 + (rand() % 21601);
-
-
-   
-   
+  time_t agora = time(NULL);
+  newRoute->dataRoutes->dateLeave = agora + (rand() % 31536000); // Até 1 ano no futuro
+  
+  // Garantir que dateArrive é entre 3 e 9 horas após dateLeave
+  int horasAdicionais = (rand() % 6) + 3; // 3 a 9 horas
+  newRoute->dataRoutes->dateArrive = newRoute->dataRoutes->dateLeave + (horasAdicionais * 3600);
+  
+ 
     newRoute->next = NULL;
 
     if(routes->ini == NULL){
