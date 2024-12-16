@@ -471,13 +471,12 @@ void generateRoute(No *airplane, Routes *routes){
 
     
     
-  time_t agora = time(NULL);
-  newRoute->dataRoutes->dateLeave = agora + (rand() % 31536000); // Até 1 ano no futuro
+  time_t saida = time(NULL) + (rand() % 31536000);
+  newRoute->dataRoutes->dateLeave = saida; // Até 1 ano no futuro
   
-  // Garantir que dateArrive é entre 3 e 9 horas após dateLeave
-  int horasAdicionais = (rand() % 6) + 3; // 3 a 9 horas
-  newRoute->dataRoutes->dateArrive = newRoute->dataRoutes->dateLeave + (horasAdicionais * 3600);
-  
+
+  time_t chegada = saida + (3  + (rand() % 6))*3600 + (rand() % 60)*60 + (rand() % 60);
+  newRoute->dataRoutes->dateArrive = chegada;
  
     newRoute->next = NULL;
 
@@ -507,16 +506,21 @@ void pushFromListRoutesToFile(Routes *routes, char *path){
     
     while(current != NULL){
 
-        
-        fprintf(file, "%s\n%s,\n%i\n%i\n%s\n%s\n%s%s", 
+        char saida_str[80];
+        char chegada_str[80];
+  
+        strftime(saida_str, sizeof(saida_str), "%c", localtime(&current->dataRoutes->dateLeave));
+        strftime(chegada_str, sizeof(chegada_str), "%c", localtime(&current->dataRoutes->dateArrive));
+  
+        fprintf(file, "%s\n%s,\n%i\n%i\n%s\n%s\n%s\n%s\n", 
                 current->dataRoutes->aviaoTokey, 
                 current->dataRoutes->AviaoEmpresa, 
                 current->dataRoutes->lugaresMax,
                 current->dataRoutes->lugaresDisponiveis,
                 current->dataRoutes->origem, 
                 current->dataRoutes->destino, 
-                ctime(&current->dataRoutes->dateLeave), 
-                ctime(&current->dataRoutes->dateArrive));
+                saida_str, 
+                chegada_str);
         current = current->next;
     }
     fclose(file);
