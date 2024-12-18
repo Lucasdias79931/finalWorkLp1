@@ -56,6 +56,7 @@ const char Estados[][3] = {"AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
 
 
 typedef struct DataRoutes{
+    char routeTokey[20];
     char aviaoTokey[51];
     char AviaoEmpresa[50];
     int lugaresMax;
@@ -74,6 +75,7 @@ typedef struct NoRoutes{
 typedef struct Routes{
     NoRoutes *ini;
     NoRoutes *end;
+    int size;
 }Routes;
 
 
@@ -82,7 +84,7 @@ typedef struct Routes{
 void pushFromListRoutesToFile(Routes *routes, char *path);
 
 void generateRoute(No *airplane, Routes *routes);
-
+char *createRouteTokey(Routes *routes);
 void freeListRoutes(Routes **routes);
 
 // função principal
@@ -330,6 +332,7 @@ void fromFileToList(Airplane *airplane, char *path){
     char empresa[51];
     char lugaresMax[4];
     char tokey[52];
+    
     /* 
         le os dados do arquivo e armazena em uma struct Data
         depois armazena a struct na lista principal que será manipulada pelo usuário
@@ -461,6 +464,8 @@ void generateRoute(No *airplane, Routes *routes){
         return;
     }
 
+    char *routeTokey = createRouteTokey(routes);
+    strcpy(newRoute->dataRoutes->routeTokey, routeTokey);
     newRoute->dataRoutes->lugaresMax = 50;
     newRoute->dataRoutes->lugaresDisponiveis = 50;
     strcpy(newRoute->dataRoutes->aviaoTokey, airplane->data->tokey);
@@ -487,8 +492,53 @@ void generateRoute(No *airplane, Routes *routes){
         routes->end->next = newRoute;
         routes->end = newRoute;
     }
+
+    routes->size++;
+    free(routeTokey);
 }
 
+char *createRouteTokey(Routes *routes){
+    if(!routes){
+        perror("erro em createTokey");
+        exit(1);
+    }
+
+    while(true){
+        char *tokey = malloc(sizeof(char) * 20);
+        if(!tokey){
+            perror("erro ao alocar memória");
+            free(tokey);
+            exit(1);
+        }
+        
+        for(int i = 0; i < 19; i++){
+            tokey[i] = 'A' + rand() % 26;
+        }
+        tokey[19] = '\0';
+
+        if(routes->size == 0){
+            return tokey;
+        }
+
+        NoRoutes *current = routes->ini;
+
+        while(current){
+            if(strcmp(current->dataRoutes->routeTokey, tokey) == 0){
+                break;
+            }
+            current = current->next;
+        }
+
+        if(current){
+            continue;
+        }
+
+        return tokey;
+    }
+
+   
+    
+}
 
 void pushFromListRoutesToFile(Routes *routes, char *path){
     if(!routes){
@@ -512,7 +562,8 @@ void pushFromListRoutesToFile(Routes *routes, char *path){
         strftime(saida_str, sizeof(saida_str), "%c", localtime(&current->dataRoutes->dateLeave));
         strftime(chegada_str, sizeof(chegada_str), "%c", localtime(&current->dataRoutes->dateArrive));
   
-        fprintf(file, "%s\n%s,\n%i\n%i\n%s\n%s\n%s\n%s\n", 
+        fprintf(file, "%s\n%s\n%s\n%i\n%i\n%s\n%s\n%s\n%s\n", 
+                current->dataRoutes->routeTokey,
                 current->dataRoutes->aviaoTokey, 
                 current->dataRoutes->AviaoEmpresa, 
                 current->dataRoutes->lugaresMax,

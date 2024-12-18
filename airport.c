@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 700
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -9,6 +10,7 @@
 
 
 typedef struct Data{
+    char tokeyCliente[30];
     char nome[100];
     char cpf[15];
     char email[100];
@@ -25,9 +27,54 @@ typedef struct noCliente{
 typedef struct Cliente{
     NoCliente *ini;
     NoCliente *end;
+    int size;
 }ClienteList;
 
-Data *createData(char *nome, char *cpf, char *email, char *telefone, char *idade, char *password){
+
+char *createClientTokey(ClienteList *clients){
+    if(!clients){
+        perror("erro em createTokey");
+        exit(1);
+    }
+
+    while(true){
+        char *tokey = malloc(sizeof(char) * 30);
+        if(!tokey){
+            perror("erro ao alocar memória");
+            free(tokey);
+            exit(1);
+        }
+        
+        for(int i = 0; i < 29; i++){
+            tokey[i] = 'A' + rand() % 26;
+        }
+        tokey[30] = '\0';
+
+        if(clients->size == 0){
+            return tokey;
+        }
+
+        NoCliente *current = clients->ini;
+
+        while(current){
+            if(strcmp(current->data->tokeyCliente, tokey) == 0){
+                break;
+            }
+            current = current->next;
+        }
+
+        if(current){
+            continue;
+        }
+
+        return tokey;
+    }
+
+   
+    
+}
+
+Data *createData(char *tokeyCliente, char *nome, char *cpf, char *email, char *telefone, char *idade, char *password){
     Data *data = malloc(sizeof(Data));
     if(!data){
         perror("erro ao alocar memória");
@@ -35,6 +82,7 @@ Data *createData(char *nome, char *cpf, char *email, char *telefone, char *idade
         return NULL;
     }
 
+    strcpy(data->tokeyCliente, tokeyCliente);
     strcpy(data->nome, nome);
     strcpy(data->cpf, cpf);
     strcpy(data->email, email);
@@ -81,7 +129,7 @@ void fromFileToClientList(ClienteList *cliente, char *path){
         perror("Erro ao abrir o arquivo");
         return;
     }
-
+    char tokey[31];
     char nome[100];
     char cpf[15];
     char email[100];
@@ -89,20 +137,24 @@ void fromFileToClientList(ClienteList *cliente, char *path){
     char idade[15];
     char password[50];
 
-    while(fgets(nome, 100, file) != NULL){
+    while(fgets(tokey, 31, file) != NULL){
+        fgets(nome, 100, file);
         fgets(cpf, 15, file);
         fgets(email, 100, file);
         fgets(telefone, 15, file);
         fgets(idade, 15, file);
         fgets(password, 50, file);
-        
+        fgets(tokey, 31, file);
+
+        strtok(tokey, "\n");
+        tokey[30] = '\0';
         strtok(nome, "\n");
         strtok(cpf, "\n");
         strtok(email, "\n");
         strtok(telefone, "\n");
         strtok(idade, "\n");
         strtok(password, "\n");
-        Data *data = createData(nome, cpf, email, telefone, idade, password);
+        Data *data = createData(tokey, nome, cpf, email, telefone, idade, password);
         pushToListClient(cliente, data);
     }
     fclose(file);
@@ -178,7 +230,7 @@ void fromListToFileClient(ClienteList *cliente, char *path){
    
     
     while(current != NULL){
-        fprintf(file, "%s\n%s\n%s\n%s\n%s\n%s\n", current->data->nome, current->data->cpf, current->data->email, current->data->telefone, current->data->idade, current->data->password);
+        fprintf(file, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n",current->data->tokeyCliente, current->data->nome, current->data->cpf, current->data->email, current->data->telefone, current->data->idade, current->data->password);
         current = current->next;
     }
     fclose(file);
@@ -193,9 +245,21 @@ void freeClientList(ClienteList *cliente){
     }
 }
 
+void printAllClients(ClienteList *cliente){
+    if(!cliente){
+        perror("erro em printAllClient");
+        return;
+    }
+    NoCliente *current = cliente->ini;
+    while(current != NULL){
+        printf("%s\n%s\n%s\n%s\n%s\n%s\n%s\n",current->data->tokeyCliente, current->data->nome, current->data->cpf, current->data->email, current->data->telefone, current->data->idade, current->data->password);
+        current = current->next;
+    }
+}
 // Estruturas e funçãos para manipular dados das rotas
 
 typedef struct DataRoutes{
+    char routesTokey[20];
     char aviaoTokey[51];
     char AviaoEmpresa[50];
     int lugaresMax;
@@ -204,6 +268,7 @@ typedef struct DataRoutes{
     char destino[3];
     char dateLeave[50];
     char dateArrive[50];
+    float price;
 }DataRoutes;
 
 typedef struct NoRoutes{
@@ -214,14 +279,17 @@ typedef struct NoRoutes{
 typedef struct Routes{
     NoRoutes *ini;
     NoRoutes *end;
+    int size;
 }Routes;
 
-DataRoutes *createDataRoutes(char *aviaoTokey, char *AviaoEmpresa, int maxLugar, int lugaresDisp, char *origem, char *destino, char *dateLeave, char *dateArrive){
+DataRoutes *createDataRoutes(char *routeTokey, char *aviaoTokey, char *AviaoEmpresa, int maxLugar, int lugaresDisp, char *origem, char *destino, char *dateLeave, char *dateArrive){
     DataRoutes *data = malloc(sizeof(DataRoutes));
     if(!data){
         perror("erro ao alocar memória");
         return NULL;
     }
+
+    strcpy(data->routesTokey, routeTokey);
     strcpy(data->aviaoTokey, aviaoTokey);
     strcpy(data->AviaoEmpresa, AviaoEmpresa);
     data->lugaresMax = maxLugar;
@@ -262,6 +330,7 @@ void fromFileToListRoutes(Routes *routes, char *path){
         return;
     }
 
+    char routeTokey[21];
     char aviaoTokey[51];
     int lugaresMax;
     int lugaresDisponiveis;
@@ -270,12 +339,17 @@ void fromFileToListRoutes(Routes *routes, char *path){
     char destino[4];
     char dateLeave[50];
     char dateArrive[50];
+    srand(time(NULL));
+    time_t now = time(NULL) + 7 * 24 * 60 * 60;
+    
+    
     /* 
         le os dados do arquivo e armazena em uma struct Data
         depois armazena a struct na lista principal que será manipulada pelo usuário
 
     */
-    while(fgets(aviaoTokey, 51, file) != NULL){
+    while(fgets(routeTokey, 21, file) != NULL){
+        fgets(aviaoTokey, 51, file) != NULL;
         char lugaresM[4];
         char lugaresD[4];
         fgets(AviaoEmpresa, 50, file);
@@ -286,6 +360,9 @@ void fromFileToListRoutes(Routes *routes, char *path){
         fgets(dateLeave, 50, file);
         fgets(dateArrive, 50, file);
 
+
+
+        strtok(routeTokey, "\n");
         strtok(aviaoTokey, "\n");
         strtok(lugaresM, "\n");
         strtok(lugaresD, "\n");
@@ -295,12 +372,30 @@ void fromFileToListRoutes(Routes *routes, char *path){
         strtok(dateLeave, "\n");
         strtok(dateArrive, "\n");
 
+        routeTokey[20] = '\0';
         
         int  maxLugar = atoi(lugaresM);
         int  lugaresDisp = atoi(lugaresD);
-        DataRoutes *data = createDataRoutes(aviaoTokey, AviaoEmpresa, maxLugar, lugaresDisp, origem, destino, dateLeave, dateArrive);
+        DataRoutes *data = createDataRoutes(routeTokey, aviaoTokey, AviaoEmpresa, maxLugar, lugaresDisp, origem, destino, dateLeave, dateArrive);
+
         pushToListRoutes(routes, data);
 
+        data->price = 300 + rand() % 2500;
+        
+        struct tm tm_leave = {0};  
+        time_t leave_time;
+
+        if (strptime(data->dateLeave, "%a %b %d %H:%M:%S %Y", &tm_leave) == NULL) {
+            printf("Erro ao converter a data\n");
+            exit(1);
+        }
+        leave_time = mktime(&tm_leave);
+        
+
+        if(leave_time < now){
+            data->price += data->price * 0.30;
+        }
+        
 
     }
 }
@@ -320,7 +415,8 @@ void fromListToFileRoutes(Routes *routes, char *path){
 
     NoRoutes *current = routes->ini;
     while(current != NULL){
-        fprintf(file, "%s\n%s,\n%i\n%i\n%s\n%s\n%s%s", 
+        fprintf(file, "%s\n%s\n%s,\n%i\n%i\n%s\n%s\n%s%s",
+                current->dataRoutes->routesTokey, 
                 current->dataRoutes->aviaoTokey, 
                 current->dataRoutes->AviaoEmpresa, 
                 current->dataRoutes->lugaresMax,
@@ -369,6 +465,8 @@ void printByRegion(int region){
     }
 }
 
+
+//função apenas para testes
 void printAllRoutes(Routes *routes){
     if(!routes){
         perror("erro em printAllRoutes");
@@ -376,7 +474,8 @@ void printAllRoutes(Routes *routes){
     }
     NoRoutes *current = routes->ini;
     while(current != NULL){
-        printf("%s\n%s,\n%i\n%i\n%s\n%s\n%s\n%s\n", 
+        printf("%s\n%s\n%s\n%i\n%i\n%s\n%s\n%s\n%s\n%f\n",
+                current->dataRoutes->routesTokey, 
                 current->dataRoutes->aviaoTokey, 
                 current->dataRoutes->AviaoEmpresa, 
                 current->dataRoutes->lugaresMax,
@@ -384,9 +483,97 @@ void printAllRoutes(Routes *routes){
                 current->dataRoutes->origem, 
                 current->dataRoutes->destino, 
                 current->dataRoutes->dateLeave, 
-                current->dataRoutes->dateArrive);
+                current->dataRoutes->dateArrive,
+                current->dataRoutes->price);
         current = current->next;
     }
+}
+////////////////////////////////////////////////
+
+// Estrutura e funçõeos para manipular as passagens dos clientes
+
+typedef struct dataPassages{
+    char routeTokey[20];
+    char clientTokey[30];
+    float price;
+}dataPassages;
+
+typedef struct NoPassages{
+    dataPassages *dataPassages;
+    struct NoPassages *next;
+}NoPassages;
+
+typedef struct Passages{
+    NoPassages *ini;
+    NoPassages *end;
+    int size;
+}Passages;
+
+dataPassages *createDataPassages(char *routeTokey, char *clientTokey, float price){
+    dataPassages *data = malloc(sizeof(dataPassages));
+    if(!data){
+        perror("erro ao alocar memória");
+        return NULL;
+    }
+    strcpy(data->routeTokey, routeTokey);
+    strcpy(data->clientTokey, clientTokey);
+    data->price = price;
+    return data;
+}
+void addPassages(Passages *passages, dataPassages *data){
+    NoPassages *newNode = malloc(sizeof(NoPassages));
+    if(!newNode){
+        perror("erro ao alocar memória");
+        return;
+    }
+    newNode->dataPassages = data;
+    newNode->next = NULL;
+    if(passages->ini == NULL){
+        passages->ini = newNode;
+        passages->end = newNode;
+    }else{
+        passages->end->next = newNode;
+        passages->end = newNode;
+    }
+    passages->size++;
+}
+void fromFileToPassages(Passages *passages, char *path){
+    FILE *file = fopen(path, "r");
+    if(!file){
+        perror("erro ao abrir o arquivo");
+        exit(1);
+    }
+
+    char routeTokey[21];
+    char clientTokey[31];
+    char price[10];
+    while(fgets(routeTokey, 21, file) != NULL){
+        fgets(clientTokey, 31, file);
+        fgets(price, 10, file);
+
+        routeTokey[20] = '\0';
+        clientTokey[30] = '\0';
+        strtok(routeTokey, "\n");
+        strtok(clientTokey, "\n");
+        strtok(price, "\n");
+        float priceFloat = atof(price);
+        dataPassages *data = createDataPassages(routeTokey, clientTokey, priceFloat);
+        addPassages(passages, data);
+    }
+    fclose(file);
+}
+void pushToFilePassages(Passages *passages, char *path){
+    FILE *file = fopen(path, "w");
+    if(!file){
+        perror("erro ao abrir o arquivo");
+        exit(1);
+    }
+    NoPassages *current = passages->ini;
+    while(current != NULL){
+        fprintf(file, "%s\n%s\n%.2f\n", current->dataPassages->routeTokey, current->dataPassages->clientTokey, current->dataPassages->price);
+        current = current->next;
+    }
+    fclose(file);
 }
 int main(){
     ClienteList *clients = malloc(sizeof(ClienteList));
@@ -398,11 +585,14 @@ int main(){
 
     clients->ini = NULL;
     clients->end = NULL;
+    clients->size = 0;
 
 
     char path[] = "DB/clientes.txt";
 
     fromFileToClientList(clients, path);
+    
+    // login e cadastro
     /*
     while(true){
         printf("Escolha uma opcao:\n");
@@ -444,6 +634,7 @@ int main(){
                 char telefone[15];
                 char idade[15];
                 char password[50];
+                char *tokeyCliete = createClientTokey(clients);
 
                 printf("Digite o nome: ");
                 fgets(nome, 100, stdin);
@@ -469,6 +660,7 @@ int main(){
                 fgets(password, 50, stdin);
                 while(getchar() != '\n');
 
+
                 
                 strtok(nome, "\n");
                 strtok(cpf, "\n");
@@ -476,10 +668,11 @@ int main(){
                 strtok(telefone, "\n");
                 strtok(idade, "\n");
                 strtok(password, "\n");
-
-                Data *data = createData(nome, cpf, email, telefone, idade, password);
+                
+                Data *data = createData(tokeyCliete, nome, cpf, email, telefone, idade, password);
                 pushToListClient(clients, data);
-
+                free(tokeyCliete);    
+                printf("Cadastrado com sucesso\n");
 
                 break;
             case '3':
@@ -507,6 +700,8 @@ int main(){
         if(next)break;
     }
     */
+
+    // pega as rotas e inicializa a lista de rotas
     char pathRoutes[] = "DB/Routes.txt";
 
     Routes *routes = malloc(sizeof(Routes));
@@ -522,8 +717,7 @@ int main(){
     fromFileToListRoutes(routes, pathRoutes);
 
     printAllRoutes(routes);
-    
-    
+    exit(0);
     while (true){
         char leave[3];
         char arrive[3];
@@ -531,8 +725,8 @@ int main(){
         char op;
 
         printf("Escolha uma opcao:\n");
-        printf("1 - ida e volta\n");
-        printf("2 - somente ida\n");
+        printf("1 - Comprar ida e volta\n");
+        printf("2 - Comprar somente ida\n");
         printf("4 - Listar passagens compradas\n");
         printf("5 - sair\n");
         scanf("%c", &op);
