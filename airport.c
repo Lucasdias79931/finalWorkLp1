@@ -340,7 +340,8 @@ void fromFileToListRoutes(Routes *routes, char *path){
     char dateLeave[50];
     char dateArrive[50];
     srand(time(NULL));
-    time_t now = time(NULL) + 7 * 24 * 60 * 60;
+    time_t today = time(NULL);
+    time_t nextWeek = today + 7 * 24 * 60 * 60;
     
     
     /* 
@@ -392,7 +393,7 @@ void fromFileToListRoutes(Routes *routes, char *path){
         leave_time = mktime(&tm_leave);
         
 
-        if(leave_time < now){
+        if(leave_time > today && leave_time < nextWeek){
             data->price += data->price * 0.30;
         }
         
