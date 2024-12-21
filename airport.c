@@ -432,38 +432,55 @@ void fromListToFileRoutes(Routes *routes, char *path){
 }
 
 
-void printByRegion(int region){
-    switch (region){
-    case 1:
-        printf("Região Nordeste\n");
-        printf("al (Alagoas)\tba (Bahia)\tce (Ceará)\tpb (Paraíba)\tpi (Piauí)\trn (Rio Grande do Norte)\tpe (Pernambuco)\n");
-        printf("ma (Maranhão)\tse (Sergipe)");
-        break;
-    
-    case 2:
-        printf("Região Norte\n");
-        printf("ac (Acre)\tam (Amazonas)\tap (Amapá)\tma (Maranhão não, apenas para o norte, é o Amapá, Amazonas, Acre, Roraima, Rondônia, Tocantins e Pará)\tpa (Pará)\trr (Roraima)\tror (Rondônia)\tto (Tocantins)");
-        break;
-    
-    case 3:
-        printf("Região Sul\n");
-        printf("pr (Paraná)\trs (Rio Grande do Sul)\tsc (Santa Catarina)");
-        break;
-    
-    case 4:
-        printf("Região Sudeste\n");
-        printf("es (Espírito Santo)\tmg (Minas Gerais)\trj (Rio de Janeiro)\tspe (São Paulo)");
-        break;
-    
-    case 5:
-        printf("Região Centro-Oeste\n");
-        printf("df (Distrito Federal)\tgo (Goiás)\tms (Mato Grosso)\tmt (Mato Grosso do Sul)");
-        break;
-    
-    default:
-        printf("Região inválida");
-        break;
+void printByRegion(){
+    int region;
+    bool stop = false;
+    while (true){
+        printf("\n1 - Regiao Nordeste\n2 - Regiao Norte\n3 - Regiao Sul\n4 - Regiao Sudeste\n5 - Regiao Centro-Oeste\n");
+        scanf("%i", &region);
+        switch (region){
+            case 1:
+                printf("Região Nordeste\n");
+                printf("al (Alagoas)\tba (Bahia)\tce (Ceará)\tpb (Paraíba)\tpi (Piauí)\trn (Rio Grande do Norte)\tpe (Pernambuco)\n");
+                printf("ma (Maranhão)\tse (Sergipe)");
+                stop = true;
+                break;
+            
+            case 2:
+                printf("Região Norte\n");
+                printf("ac (Acre)\tam (Amazonas)\tap (Amapá)\tma (Maranhão não, apenas para o norte, é o Amapá, Amazonas, Acre, Roraima, Rondônia, Tocantins e Pará)\tpa (Pará)\trr (Roraima)\tror (Rondônia)\tto (Tocantins)");
+                stop = true;
+                break;
+            
+            case 3:
+                printf("Região Sul\n");
+                printf("pr (Paraná)\trs (Rio Grande do Sul)\tsc (Santa Catarina)");
+                stop = true;
+                break;
+            
+            case 4:
+                printf("Região Sudeste\n");
+                printf("es (Espírito Santo)\tmg (Minas Gerais)\trj (Rio de Janeiro)\tspe (São Paulo)");
+                stop = true;
+                break;
+            
+            case 5:
+                printf("Região Centro-Oeste\n");
+                printf("df (Distrito Federal)\tgo (Goiás)\tms (Mato Grosso)\tmt (Mato Grosso do Sul)");
+                stop = true;
+                break;
+            
+            default:
+
+                printf("Região inválida");
+                break;
+            }
+
+            if(stop){
+                break;
+            }
     }
+    
 }
 
 
@@ -571,11 +588,71 @@ void pushToFilePassages(Passages *passages, char *path){
     }
     NoPassages *current = passages->ini;
     while(current != NULL){
-        fprintf(file, "%s\n%s\n%.2f\n", current->dataPassages->routeTokey, current->dataPassages->clientTokey, current->dataPassages->price);
+        fprintf(file, "%s\n%s\n%.4f\n", current->dataPassages->routeTokey, current->dataPassages->clientTokey, current->dataPassages->price);
         current = current->next;
     }
     fclose(file);
 }
+
+/// Funções para compra 
+
+void selectRoute(char *leave, char *arrive, char Estados[][3]){
+    while (true){
+            printf("Digite o estado de origem: ");
+            fgets(leave, 2, stdin);
+            while(getchar() != '\n');
+            printf("Digite o estado de destino: ");
+            fgets(arrive, 2, stdin);
+            while(getchar() != '\n');
+
+            int fould = 0;
+
+            if(strcmp(leave, arrive) == 0){
+                printf("Origem e destino iguais\n");
+                continue;
+            }
+
+            for(int i = 0; i < 27; i++){
+                if(strncmp(Estados[i], leave, 2) == 0){
+                    fould++;
+                }
+                if(strncmp(Estados[i], arrive, 2) == 0){
+                    fould++;
+                }
+            }
+            if(fould == 2){
+                
+                break;
+            }else{
+                printf("Estado nao encontrado! Preencha novamente\n");
+            }
+
+        }
+}
+
+void showRoutes(Routes *routes, char estado[3], time_t delimitador){
+    NoRoutes *current = routes->ini;
+    
+    while(current != NULL){
+        
+        struct tm tm_leave = {0};  
+        time_t leave_time;
+
+        if (strptime(current->dataRoutes->dateLeave, "%a %b %d %H:%M:%S %Y", &tm_leave) == NULL) {
+            printf("Erro ao converter a data\n");
+            exit(1);
+        }
+        leave_time = mktime(&tm_leave);
+
+        if(leave_time >= delimitador){
+            if(strcmp(current->dataRoutes->origem, estado) == 0 && strcmp(current->dataRoutes->destino, estado) == 0){
+                
+            }
+        }
+        current = current->next;
+    }
+}
+
 int main(){
     ClienteList *clients = malloc(sizeof(ClienteList));
     if(!clients){
@@ -717,28 +794,46 @@ int main(){
     
     fromFileToListRoutes(routes, pathRoutes);
 
-    printAllRoutes(routes);
-    exit(0);
+    // pegaa as passagens e inicializa a lista de passagens
+    Passages *passages = malloc(sizeof(Passages));
+    if(!passages){
+        perror("erro ao alocar memória");
+        free(passages);
+        exit(1);
+    }
+
+    passages->ini = NULL;
+    passages->end = NULL;
+    passages->size = 0;
+
+    char pathPassages[] = "DB/Passages.txt";
+    fromFileToListPassages(passages, pathPassages);
+
+    char Estados[][3] = {"AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO"};
+
     while (true){
         char leave[3];
         char arrive[3];
-        bool idaVolta = false;
         char op;
+        bool idaVolta = false;
+        bool found = false; // verificar o estado de partida e chegada existe no array
 
         printf("Escolha uma opcao:\n");
         printf("1 - Comprar ida e volta\n");
         printf("2 - Comprar somente ida\n");
         printf("4 - Listar passagens compradas\n");
-        printf("5 - sair\n");
+        printf("5 - Desfazer compra\n");
+        printf("6 - sair\n");
         scanf("%c", &op);
         while (getchar() != '\n');
 
         switch(op){
             case '1':
                 idaVolta = true;
+                selectRoute(leave, arrive, Estados);
                 break;
             case '2':
-                idaVolta = false;
+                
                 break;
             case '4':
                 
@@ -746,14 +841,23 @@ int main(){
             case '5':
                 exit(0);
                 break;
+            case '6':
+                exit(0);
+                break;
             default:
                 printf("Opcao invalida\n");
+                continue;
                 break;
         }
+        
+
         
         
         
     }
+
+
+    
     
  
     return 0;
