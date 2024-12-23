@@ -83,7 +83,7 @@ typedef struct Routes{
 
 void pushFromListRoutesToFile(Routes *routes, char *path);
 
-void generateRoute(No *airplane, Routes *routes);
+void generateRoute(No *airplane, Routes *routes, time_t leave, int origemIndex, int destinoIndex);
 char *createRouteTokey(Routes *routes);
 void freeListRoutes(Routes **routes);
 
@@ -177,8 +177,33 @@ int main(){
 
                 No *current = airplane->ini;
                 printf("\nGerando rotas\n");
+                
+                time_t leave = time(NULL);
+                
                 while(current){
-                    generateRoute(current, routes);
+                    int origemIndex = 0, destinoIndex = 0;
+
+                    for(int i = 0; i < 500; i++){
+
+                        //passa o index de origem do aviao. dessa forma, garante que o avião passe por todas as regioes
+                        
+                        
+                        while(true){
+                            destinoIndex = rand() % 26;
+                            if(origemIndex != destinoIndex){
+                                break;
+                            }
+                        
+                        }
+
+
+                        
+
+                        generateRoute(current, routes, leave, origemIndex, destinoIndex);
+
+                        origemIndex = destinoIndex;
+                        leave += 12 * 60 * 60;
+                    }
                     current = current->next;
 
                 }
@@ -433,7 +458,7 @@ void fromListToFileAirplane(Airplane *airplane, char *path){
 
 
 
-void generateRoute(No *airplane, Routes *routes){
+void generateRoute(No *airplane, Routes *routes, time_t leave, int origemIndex, int destinoIndex){
 
     if(!airplane || !routes){
         perror("erro em generateRoute");
@@ -448,15 +473,7 @@ void generateRoute(No *airplane, Routes *routes){
    
 
 
-    int origemIndex  = 0;
-    int destinoIndex = 0;
-    while (true){
-        origemIndex  = rand() % 26;
-        destinoIndex = rand() % 26;
-        if(origemIndex != destinoIndex){
-            break;
-        }
-    }
+   
 
     newRoute->dataRoutes = malloc(sizeof(DataRoutes));
     if(!newRoute->dataRoutes){
@@ -475,12 +492,10 @@ void generateRoute(No *airplane, Routes *routes){
 
 
     
-    
-  time_t saida = time(NULL) + (rand() % 31536000);
-  newRoute->dataRoutes->dateLeave = saida; // Até 1 ano no futuro
+  newRoute->dataRoutes->dateLeave = leave; // Até 1 ano no futuro
   
 
-  time_t chegada = saida + (3  + (rand() % 6))*3600 + (rand() % 60)*60 + (rand() % 60);
+  time_t chegada = leave + (3  + (rand() % 6))*3600 + (rand() % 60)*60 + (rand() % 60);
   newRoute->dataRoutes->dateArrive = chegada;
  
     newRoute->next = NULL;
