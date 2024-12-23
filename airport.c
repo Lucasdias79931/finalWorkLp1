@@ -425,7 +425,7 @@ void fromListToFileRoutes(Routes *routes, char *path){
 
     NoRoutes *current = routes->ini;
     while(current != NULL){
-        fprintf(file, "%s\n%s\n%s,\n%i\n%i\n%s\n%s\n%s%s",
+        fprintf(file, "%s\n%s\n%s\n%i\n%i\n%s\n%s\n%s\n%s\n",
                 current->dataRoutes->routesTokey, 
                 current->dataRoutes->aviaoTokey, 
                 current->dataRoutes->AviaoEmpresa, 
@@ -550,6 +550,8 @@ void fromListToFilePassages(Passages *passages, char *path){
     while(current != NULL){
         fprintf(file, "%s\n%s\n%.4f\n", current->dataPassages->routeTokey, current->dataPassages->clientTokey, current->dataPassages->price);
         current = current->next;
+        printf("passagens\n");
+        printf("%s\n%s\n%.4f\n", current->dataPassages->routeTokey, current->dataPassages->clientTokey, current->dataPassages->price);
     }
     fclose(file);
 }
@@ -1031,7 +1033,7 @@ int main(){
                 fouldRoute(leave, arrive, Estados, back);
                 back = true;
                 DataRoutes *ida = selectRoutes(routes, leave, arrive, &today);
-                if(!ida){
+                if(!ida && !(buyTicket(passages, ida, thisClientTokey))){
                     printf("Algum erro ocorreu ao tentar comprar passagem de ida, Tente novamente mais tarde!\n");
 
                     stop  = true;
@@ -1045,7 +1047,7 @@ int main(){
                 fouldRoute(leave, arrive, Estados, back);
                 DataRoutes *volta = selectRoutes(routes, arrive, leave, &today);
                
-                if(!volta){
+                if(!volta && !(buyTicket(passages, volta, thisClientTokey))){
                     printf("Algum erro ocorreu ao tentar comprar passagem de volta, Tente novamente mais tarde!\n");
 
                     stop  = true;
@@ -1054,24 +1056,25 @@ int main(){
 
 
 
-                if(buyTicket(passages, ida, thisClientTokey) && buyTicket(passages, volta, thisClientTokey)){
-                    
-                    printf("Passagens compradas com sucesso!\n");
-                    printf("Digite s ou S para comprar novamente:");
-                    char breakNow;
-                    scanf("%c", &breakNow);
-                    while(getchar() != '\n');
-                    if(breakNow == 's' || breakNow == 'S'){
-                        stop = false;
-                    }else{
-                        printf("\nObrigado pela compra!\n");
-                        printf("Salvando passagens e saindo...\n");
-                        fromListToFilePassages(passages, pathPassages);
-                        fromListToFileRoutes(routes, pathRoutes);
-                        stop = true;
-                    }
+                
+                printf("Passagens compradas com sucesso!\n");
+                printf("Digite s ou S para comprar novamente:");
+                char breakNow;
+                scanf("%c", &breakNow);
+                while(getchar() != '\n');
+                if(breakNow == 's' || breakNow == 'S'){
+                    stop = false;
+                }else{
+                    printf("\nObrigado pela compra!\n");
+                    printf("Salvando passagens e saindo...\n");
+                    fromListToFilePassages(passages, pathPassages);
+                    fromListToFileRoutes(routes, pathRoutes);
 
+                    
+                    stop = true;
                 }
+
+                
                 
                 break;
             case '2':
