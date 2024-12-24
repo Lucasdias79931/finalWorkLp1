@@ -526,9 +526,9 @@ void fromFileToListPassages(Passages *passages, char *path) {
         exit(1);
     }
 
-    char routeTokey[21];  // Tamanho suficiente para 20 chars + \0
-    char clientTokey[31]; // Tamanho suficiente para 30 chars + \0
-    char price[11];       // Tamanho suficiente para 10 chars + \0
+    char routeTokey[21];  
+    char clientTokey[31]; 
+    char price[10];       
 
     while (1) {
         // Lê e verifica cada campo individualmente
