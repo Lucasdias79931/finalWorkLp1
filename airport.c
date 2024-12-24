@@ -41,7 +41,8 @@ typedef struct Cliente{
 
 char *createClientTokey(ClienteList *clients){
     if(!clients){
-        perror("erro em createTokey");
+        printf("erro em createTokey");
+        perror("ERROR");
         exit(1);
     }
 
@@ -154,14 +155,13 @@ void fromFileToClientList(ClienteList *cliente, char *path){
         fgets(password, 50, file);
         fgets(tokey, 31, file);
 
-        strtok(tokey, "\n");
-        tokey[30] = '\0';
-        strtok(nome, "\n");
-        strtok(cpf, "\n");
-        strtok(email, "\n");
-        strtok(telefone, "\n");
-        strtok(idade, "\n");
-        strtok(password, "\n");
+        tokey[strcspn(tokey, "\n")] = '\0';
+        nome[strcspn(nome, "\n")] = '\0';
+        cpf[strcspn(cpf, "\n")] = '\0';
+        email[strcspn(email, "\n")] = '\0';
+        telefone[strcspn(telefone, "\n")] = '\0';
+        idade[strcspn(idade, "\n")] = '\0';
+        password[strcspn(password, "\n")] = '\0';
         Data *data = createData(tokey, nome, cpf, email, telefone, idade, password);
         pushToListClient(cliente, data);
     }
@@ -188,7 +188,7 @@ char *verifyPassword(ClienteList *cliente, char *cpf, char *password){
         
         if(strcmp(current->data->cpf, cpf) == 0 && strcmp(current->data->password, password) == 0){
             printf("Logado com sucesso\n");
-            exit(1);
+            
             return current->data->tokeyCliente;
         }
         current = current->next;
@@ -342,7 +342,7 @@ void fromFileToListRoutes(Routes *routes, char *path){
     char aviaoTokey[51];
     int lugaresMax;
     int lugaresDisponiveis;
-    char AviaoEmpresa[50];
+    char AviaoEmpresa[51];
     char origem[4];
     char destino[4];
     char dateLeave[50];
@@ -358,10 +358,10 @@ void fromFileToListRoutes(Routes *routes, char *path){
 
     */
     while(fgets(routeTokey, 21, file) != NULL){
-        fgets(aviaoTokey, 51, file) != NULL;
+        fgets(aviaoTokey, 51, file);
         char lugaresM[4];
         char lugaresD[4];
-        fgets(AviaoEmpresa, 50, file);
+        fgets(AviaoEmpresa, 51, file);
         fgets(lugaresM, 4, file);
         fgets(lugaresD, 4, file);
         fgets(origem, 4, file);
@@ -369,45 +369,49 @@ void fromFileToListRoutes(Routes *routes, char *path){
         fgets(dateLeave, 50, file);
         fgets(dateArrive, 50, file);
 
+        routeTokey[strcspn(routeTokey, "\n")] = '\0';
+        aviaoTokey[strcspn(aviaoTokey, "\n")] = '\0';
+        AviaoEmpresa[strcspn(AviaoEmpresa, "\n")] = '\0';
+        lugaresM[strcspn(lugaresM, "\n")] = '\0';
+        lugaresD[strcspn(lugaresD, "\n")] = '\0';
+        origem[strcspn(origem, "\n")] = '\0';
+        destino[strcspn(destino, "\n")] = '\0';
+        dateLeave[strcspn(dateLeave, "\n")] = '\0';
+        dateArrive[strcspn(dateArrive, "\n")] = '\0';
 
+        
 
-        strtok(routeTokey, "\n");
-        strtok(aviaoTokey, "\n");
-        strtok(lugaresM, "\n");
-        strtok(lugaresD, "\n");
-        strtok(AviaoEmpresa, "\n");
-        strtok(origem, "\n");
-        strtok(destino, "\n");
-        strtok(dateLeave, "\n");
-        strtok(dateArrive, "\n");
-
-        routeTokey[20] = '\0';
+        
         
         int  maxLugar = atoi(lugaresM);
         int  lugaresDisp = atoi(lugaresD);
+        
+        
         DataRoutes *data = createDataRoutes(routeTokey, aviaoTokey, AviaoEmpresa, maxLugar, lugaresDisp, origem, destino, dateLeave, dateArrive);
 
         
 
-        data->price = 300 + rand() % 2500;
+        data->price = 300 + (rand() % 2500);
         
         struct tm tm_leave = {0};  
         time_t leave_time;
 
         if (strptime(data->dateLeave, "%a %b %d %H:%M:%S %Y", &tm_leave) == NULL) {
             printf("Erro ao converter a data\n");
+            printf("%s\n", data->dateLeave);
             exit(1);
         }
         leave_time = mktime(&tm_leave);
         
 
-        if(leave_time > today && leave_time < nextWeek){
+        if(leave_time >= today && leave_time <= nextWeek){
             data->price += data->price * 0.30;
         }
         pushToListRoutes(routes, data);
-        
-
+       
     }
+
+    
 }
 
 void fromListToFileRoutes(Routes *routes, char *path){
@@ -515,31 +519,41 @@ void addPassages(Passages *passages, dataPassages *data){
     }
     passages->size++;
 }
-void fromFileToListPassages(Passages *passages, char *path){
+void fromFileToListPassages(Passages *passages, char *path) {
     FILE *file = fopen(path, "r");
-    if(!file){
-        perror("erro ao abrir o arquivo");
+    if (!file) {
+        perror("Erro ao abrir o arquivo");
         exit(1);
     }
 
-    char routeTokey[21];
-    char clientTokey[31];
-    char price[10];
-    while(fgets(routeTokey, 21, file) != NULL){
-        fgets(clientTokey, 31, file);
-        fgets(price, 10, file);
+    char routeTokey[21];  // Tamanho suficiente para 20 chars + \0
+    char clientTokey[31]; // Tamanho suficiente para 30 chars + \0
+    char price[11];       // Tamanho suficiente para 10 chars + \0
 
-        routeTokey[20] = '\0';
-        clientTokey[30] = '\0';
-        strtok(routeTokey, "\n");
-        strtok(clientTokey, "\n");
-        strtok(price, "\n");
+    while (1) {
+        // Lê e verifica cada campo individualmente
+        if (!fgets(routeTokey, sizeof(routeTokey), file)) break;
+        if (!fgets(clientTokey, sizeof(clientTokey), file)) break;
+        if (!fgets(price, sizeof(price), file)) break;
+
+        // Remove possíveis '\n' do final das strings
+        routeTokey[strcspn(routeTokey, "\n")] = '\0';
+        clientTokey[strcspn(clientTokey, "\n")] = '\0';
+        price[strcspn(price, "\n")] = '\0';
+
+        // Converte o preço para float
         float priceFloat = atof(price);
+
+        // Cria e adiciona a estrutura de dados
         dataPassages *data = createDataPassages(routeTokey, clientTokey, priceFloat);
         addPassages(passages, data);
     }
+
     fclose(file);
+
+    
 }
+
 void fromListToFilePassages(Passages *passages, char *path){
     FILE *file = fopen(path, "w");
     if(!file){
@@ -550,8 +564,7 @@ void fromListToFilePassages(Passages *passages, char *path){
     while(current != NULL){
         fprintf(file, "%s\n%s\n%.4f\n", current->dataPassages->routeTokey, current->dataPassages->clientTokey, current->dataPassages->price);
         current = current->next;
-        printf("passagens\n");
-        printf("%s\n%s\n%.4f\n", current->dataPassages->routeTokey, current->dataPassages->clientTokey, current->dataPassages->price);
+      
     }
     fclose(file);
 }
@@ -685,14 +698,16 @@ void fouldRoute(char *leave, char *arrive, const char Estados[][3], bool back){
         }
 }
 
+
 //ordena passagem por preco na orde crescente
-void ordenaPass(DataRoutes ***data, int size){
-    for(int i = 0; i < size - 1; i++){
-        for(int j = i + 1; j < size; j++){
-            if((*data)[i]->price > (*data)[j]->price){
-                DataRoutes *aux = (*data)[i];
-                (*data)[i] = (*data)[j];
-                (*data)[j] = aux;
+void ordenaPass(DataRoutes *data[], int size) {
+    for (int i = 0; i < size - 1; i++) {
+        for (int j = i + 1; j < size; j++) {
+            if (data[i]->price > data[j]->price) {
+               
+                DataRoutes *temp = data[i];
+                data[i] = data[j];
+                data[j] = temp;
             }
         }
     }
@@ -701,13 +716,10 @@ DataRoutes *selectRoutes(Routes *routes, char *leave, char *arrive, time_t *deli
     NoRoutes *current = routes->ini;
 
    
-    DataRoutes **data = calloc(10, sizeof(DataRoutes*));
+    DataRoutes *data[10] = {0};
     int k = 0;
     bool fould = false;
-    if(!data){
-        perror("erro ao alocar memória");
-        return NULL;
-    }
+   
 
     
 
@@ -717,8 +729,11 @@ DataRoutes *selectRoutes(Routes *routes, char *leave, char *arrive, time_t *deli
         struct tm tm_leave = {0};  
         time_t leave_time;
         bool stop = false;
+       
         if (strptime(current->dataRoutes->dateLeave, "%a %b %d %H:%M:%S %Y", &tm_leave) == NULL) {
-            printf("Erro ao converter a data\n");
+            printf("Erro ao converter a data, na função selectRoute\n");
+            printf("data:%s",current->dataRoutes->dateLeave);
+            perror("ERROR");
             return NULL;
         }
 
@@ -734,9 +749,9 @@ DataRoutes *selectRoutes(Routes *routes, char *leave, char *arrive, time_t *deli
         if(fould && (k == 9 || current->next == NULL)){
 
             while(true){
-                ordenaPass(&data, k);
+                ordenaPass(data, k);
                 for(int i = 0; i < k; i++){
-                printRoute(data[i]);
+                    printRoute(data[i]);
                 }
 
                 printf("\npressione 10 para sair\tpresione 11 para a proxima pagina\tSelecione a rota desejada entre 0 e %d: ",k);
@@ -745,11 +760,7 @@ DataRoutes *selectRoutes(Routes *routes, char *leave, char *arrive, time_t *deli
                 while(getchar() != '\n');
                 
                 if(escolha == 10){
-                    for(int i = 0; i < 10; i++){
-                        
-                        free(data[i]);
-                    }
-                    free(data);
+                   
                     return NULL;
                 }
 
@@ -757,7 +768,7 @@ DataRoutes *selectRoutes(Routes *routes, char *leave, char *arrive, time_t *deli
                     k = 0;
                     for(int i = 0; i < 10; i++){
                         
-                        free(data[i]);
+                        
                     }
                     break;
                 }
@@ -783,23 +794,15 @@ DataRoutes *selectRoutes(Routes *routes, char *leave, char *arrive, time_t *deli
 
    
     if(!fould){
-        for(int i = 0; i < 10; i++){
-            free(data[i]);
-        }
-
-        free(data);
+        printf("Nenhuma rota encontrada\n");
         return NULL;
     }
 
     DataRoutes *dataReturn = malloc(sizeof(DataRoutes));
     if(!dataReturn){
-        perror("erro ao alocar memória para dataReturn");
-        free(dataReturn);
-            for(int i = 0; i < 10; i++){
-            free(data[i]);
-        }
-
-        free(data);
+        printf("erro ao alocar memória para dataReturn");
+        perror("ERROR");
+        
         return NULL;
     }
 
@@ -812,12 +815,7 @@ DataRoutes *selectRoutes(Routes *routes, char *leave, char *arrive, time_t *deli
     strcpy(dataReturn->destino, data[k]->destino);
     strcpy(dataReturn->dateLeave, data[k]->dateLeave);
     strcpy(dataReturn->dateArrive, data[k]->dateArrive);
-    
-    for(int i = 0; i < 10; i++){
-        free(data[i]);
-    }
-
-    free(data);
+    dataReturn->price = data[k]->price;
 
     return dataReturn;
 }
@@ -825,23 +823,32 @@ DataRoutes *selectRoutes(Routes *routes, char *leave, char *arrive, time_t *deli
 
 // finaliza a compra de passagem, atualizando o número de passageiros na rota e atualizando a lista de passages
 bool buyTicket(Passages *passages, DataRoutes *dataRoute, char *tokeyClient){
-
-    if(!dataRoute || !tokeyClient){
-        perror("erro em buyTicket");
+    if(!dataRoute){
+        printf("dataRoute null\n");
+        perror("ERROR");
+        return false;
+    }
+    if(tokeyClient == NULL){
+        printf("tokeyClient null\n");
+        perror("ERROR");
         return false;
     }
 
     dataPassages *newPassage = createDataPassages(dataRoute->routesTokey, tokeyClient, dataRoute->price);
     if(!newPassage){
-        perror("erro ao criar passage");
-        free(newPassage);
-        return false;
+        perror("erro ao criar passagem");
+        return false; 
     }
 
     addPassages(passages, newPassage);
 
     return true;
 }
+
+// visualizar passagens compradas pelo usuário
+void showALLPassages(char *tokeyUser, Passages *passages, Routes *routes){
+    
+};
 int main(){
     ClienteList *clients = malloc(sizeof(ClienteList));
     if(!clients){
@@ -862,8 +869,8 @@ int main(){
     // login e cadastro
 
     // Vou usar para armazenar o tokey do usuário logado. será útil na hora da compra
-    char thisClientTokey[] = "NWLRBBMQBHCDARZOWKKYHIDDQSCDX";
-    /*
+    char *thisClientTokey = NULL;
+    
     while(true){
         clearScreen();
         printf("Escolha uma opcao:\n");
@@ -975,7 +982,7 @@ int main(){
 
         if(next)break;
     }
-    */
+    
 
     // pega as rotas e inicializa a lista de rotas
     char pathRoutes[] = "DB/Routes.txt";
@@ -1033,12 +1040,13 @@ int main(){
                 fouldRoute(leave, arrive, Estados, back);
                 back = true;
                 DataRoutes *ida = selectRoutes(routes, leave, arrive, &today);
-                if(!ida && !(buyTicket(passages, ida, thisClientTokey))){
-                    printf("Algum erro ocorreu ao tentar comprar passagem de ida, Tente novamente mais tarde!\n");
-
-                    stop  = true;
-                    break;
+                
+                if(buyTicket(passages, ida, thisClientTokey)) {
+                    printf("Passagem de ida adicionada com sucesso.\n");
+                } else {
+                    printf("Falha ao adicionar passagem de ida.\n");
                 }
+
                 clearScreen();
 
                 
@@ -1054,11 +1062,10 @@ int main(){
                     break;
                 }
 
-
-
+                
                 
                 printf("Passagens compradas com sucesso!\n");
-                printf("Digite s ou S para comprar novamente:");
+                printf("Digite s ou S para comprar novamente ou qualquer outra tecla para finalizar:");
                 char breakNow;
                 scanf("%c", &breakNow);
                 while(getchar() != '\n');
@@ -1078,9 +1085,45 @@ int main(){
                 
                 break;
             case '2':
+                printf("Escolha a passagem de ida\nPresione enter para confirmar\n");
+                getchar();
+                fouldRoute(leave, arrive, Estados, back);
+                back = true;
+                DataRoutes *TIKET = selectRoutes(routes, leave, arrive, &today);
                 
+                if(buyTicket(passages, TIKET, thisClientTokey)) {
+                    printf("Passagem adicionada com sucesso.\n");
+                } else {
+                    printf("Falha ao adicionar passagem .\n");
+                }
+
+                clearScreen();
+
+                printf("Passagen comprada com sucesso!\n");
+                printf("Digite s ou S para comprar novamente ou qualquer outra tecla para finalizar:");
+                char breakN;
+                scanf("%c", &breakN);
+                while(getchar() != '\n');
+                if(breakN == 's' || breakN == 'S'){
+                    stop = false;
+                }else{
+                    printf("\nObrigado pela compra!\n");
+                    printf("Salvando passagens e saindo...\n");
+                    fromListToFilePassages(passages, pathPassages);
+                    fromListToFileRoutes(routes, pathRoutes);
+
+                    
+                    stop = true;
+                }
+
                 break;
             case '4':
+                printf("Todas as passagens compradas:\n");
+                showALLPassages(thisClientTokey, passages, routes);
+                printf("Pressione enter para continuar\n");
+                getchar();
+
+                clearScreen();
                 
                 break;
             case '5':

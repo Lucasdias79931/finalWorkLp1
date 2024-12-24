@@ -202,7 +202,8 @@ int main(){
                         generateRoute(current, routes, leave, origemIndex, destinoIndex);
 
                         origemIndex = destinoIndex;
-                        leave += 12 * 60 * 60;
+                        
+                        leave += 12*60*60;
                     }
                     current = current->next;
 
@@ -492,10 +493,10 @@ void generateRoute(No *airplane, Routes *routes, time_t leave, int origemIndex, 
 
 
     
-  newRoute->dataRoutes->dateLeave = leave; // Até 1 ano no futuro
+  newRoute->dataRoutes->dateLeave = leave; 
   
 
-  time_t chegada = leave + (3  + (rand() % 6))*3600 + (rand() % 60)*60 + (rand() % 60);
+  time_t chegada = leave + (3 + (rand() % 7)) * 60 * 60;
   newRoute->dataRoutes->dateArrive = chegada;
  
     newRoute->next = NULL;
