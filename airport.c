@@ -18,7 +18,7 @@ void clearScreen(){
 
 
 typedef struct Data{
-    char tokeyCliente[30];
+    char tokeyCliente[31];
     char nome[100];
     char cpf[15];
     char email[100];
@@ -153,7 +153,8 @@ void fromFileToClientList(ClienteList *cliente, char *path){
         fgets(telefone, 15, file);
         fgets(idade, 15, file);
         fgets(password, 50, file);
-        fgets(tokey, 31, file);
+        
+        
 
         tokey[strcspn(tokey, "\n")] = '\0';
         nome[strcspn(nome, "\n")] = '\0';
@@ -162,10 +163,14 @@ void fromFileToClientList(ClienteList *cliente, char *path){
         telefone[strcspn(telefone, "\n")] = '\0';
         idade[strcspn(idade, "\n")] = '\0';
         password[strcspn(password, "\n")] = '\0';
+
         Data *data = createData(tokey, nome, cpf, email, telefone, idade, password);
+        
         pushToListClient(cliente, data);
     }
     fclose(file);
+    
+
 
 }
 
@@ -844,10 +849,89 @@ bool buyTicket(Passages *passages, DataRoutes *dataRoute, char *tokeyClient){
 
     return true;
 }
-
+// busca o usuário na lista de clientes
+NoCliente *searchClient(ClienteList *clients, char *tokeyUser){
+    NoCliente *current = clients->ini;
+    while(current != NULL){
+        if(strcmp(current->data->tokeyCliente, tokeyUser) == 0){
+            return current;
+        }
+        current = current->next;
+    }
+    return NULL;
+}
 // visualizar passagens compradas pelo usuário
-void showALLPassages(char *tokeyUser, Passages *passages, Routes *routes){
+void showALLPassages(ClienteList *clients, char *tokeyUser, Passages *passages, Routes *routes){
+    if(passages->size == 0 || tokeyUser == NULL || routes->size == 0){
+        printf("Nenhuma passagem encontrada\n");
+        return;
+    }
+
+    NoCliente *thisClient = searchClient(clients, tokeyUser);
+    if(!thisClient){
+        printf("Cliente nao encontrado\n");
+        return;
+    }
     
+    clearScreen();
+    Passages *thisUserPass = malloc(sizeof(Passages));
+    if(!thisUserPass){
+        perror("ERROR");
+        printf("Erro ao tentar criar lista auxiliar para passageiro!\n");
+        return;
+    }
+    thisUserPass->ini = NULL;
+    thisUserPass->end = NULL;
+    thisUserPass->size = 0;
+
+    
+    NoPassages *currentPass = passages->ini;
+    while (currentPass != NULL)
+    {
+        if(strcmp(currentPass->dataPassages->clientTokey, tokeyUser) == 0){
+            addPassages(thisUserPass, currentPass->dataPassages);
+        }
+        currentPass = currentPass->next;
+    }
+
+    if(thisUserPass->size == 0){
+        printf("Nenhuma passagem encontrada\n");
+        return;
+    }
+
+    NoRoutes *currentRoute = routes->ini;
+    
+    currentPass = thisUserPass->ini;
+    while (currentPass != NULL){
+        while(currentRoute != NULL){
+            if(strcmp(currentPass->dataPassages->routeTokey, currentRoute->dataRoutes->routesTokey) == 0){
+                printf("Passageiro:%s\n", thisClient->data->nome);
+                printf("Cpf:%s\n", thisClient->data->cpf);
+                printf("Origem:%s\n", currentRoute->dataRoutes->origem);
+                printf("Destino:%s\n", currentRoute->dataRoutes->destino);
+                printf("Data de partida:%s\n", currentRoute->dataRoutes->dateLeave);
+                printf("Data de chegada:%s\n", currentRoute->dataRoutes->dateArrive);
+                printf("Preco:%f\n", currentRoute->dataRoutes->price);
+                printf("Aviao:%s\n", currentRoute->dataRoutes->aviaoTokey);
+                printf("Empresa:%s\n", currentRoute->dataRoutes->AviaoEmpresa);
+            }
+            currentRoute = currentRoute->next;
+        }
+        currentPass = currentPass->next;
+    }
+    
+    // liberar lista auxiliar de passageiros, sem liberar DataPassages
+
+    currentPass = thisUserPass->ini;
+    NoPassages *prev = NULL;
+
+    while(currentPass != NULL){
+        prev = currentPass;
+        currentPass = currentPass->next;
+        free(prev);
+    }
+
+    free(thisUserPass);
 };
 int main(){
     ClienteList *clients = malloc(sizeof(ClienteList));
@@ -866,6 +950,7 @@ int main(){
 
     fromFileToClientList(clients, path);
     
+   
     // login e cadastro
 
     // Vou usar para armazenar o tokey do usuário logado. será útil na hora da compra
@@ -886,22 +971,22 @@ int main(){
         
         switch(op){
             case '1':
-                char Password[50];
-                char Cpf[15];
+                char Passwordlogin[50];
+                char Cpflogin[15];
 
                 printf("Digite o cpf: ");
-                fgets(Cpf, 15, stdin);
+                fgets(Cpflogin, 15, stdin);
                 while(getchar() != '\n');
                 printf("Digite a senha: ");
-                fgets(Password, 50, stdin);
+                fgets(Passwordlogin, 50, stdin);
                 while(getchar() != '\n');
 
-                strtok(Cpf, "\n");
-                strtok(Password, "\n");
-                thisClientTokey = verifyPassword(clients, Cpf, Password);
+                Passwordlogin[strcspn(Passwordlogin, "\n")] = '\0';
+                Cpflogin[strcspn(Cpflogin, "\n")] = '\0';
+                thisClientTokey = verifyPassword(clients, Cpflogin, Passwordlogin);
                 if(thisClientTokey != NULL){
                     printf("Logado com sucesso\n");
-                    strcpy(thisClientTokey, Cpf);
+
                     next = true;
                 }else{
                     printf("Cpf ou senha incorretos\n");
@@ -917,60 +1002,79 @@ int main(){
                 char password[50];
                 char *tokeyCliete = createClientTokey(clients);
 
-                printf("Digite o nome: ");
-                fgets(nome, 100, stdin);
-                while(getchar() != '\n' );
-                printf("Digite o cpf: ");
-                fgets(cpf, 15, stdin);
-                if(verifyCpf(clients, cpf) == true){
-                    printf("Cpf ja cadastrado\n");
+                while(true){
+                    printf("Digite o nome: ");
+                    fgets(nome, 100, stdin);
+                    while(getchar() != '\n' );
+                    printf("Digite o cpf: ");
+                    fgets(cpf, 12, stdin);
+                    
+                    if(verifyCpf(clients, cpf) == true){
+                        printf("Cpf ja cadastrado\n");
+                        continue;
+                    }
+
+                    while(getchar() != '\n');
+                    printf("Digite o email: ");
+                    fgets(email, 100, stdin);
+                    while(getchar() != '\n');
+                    printf("Digite o telefone: ");
+                    fgets(telefone, 15, stdin);
+                    while(getchar() != '\n');
+                    printf("Digite a idade: ");
+                    fgets(idade, 15, stdin);
+                    while(getchar() != '\n');
+                    printf("Digite a senha: ");
+                    fgets(password, 50, stdin);
+                    while(getchar() != '\n');
+
+                    nome[strcspn(nome, "\n")] = '\0';
+                    cpf[strcspn(cpf, "\n")] = '\0';
+                    email[strcspn(email, "\n")] = '\0';
+                    telefone[strcspn(telefone, "\n")] = '\0';
+                    idade[strcspn(idade, "\n")] = '\0';
+                    password[strcspn(password, "\n")] = '\0';
+                    
+                    
+                    
+                
+                    Data *data = createData(tokeyCliete, nome, cpf, email, telefone, idade, password);
+                    pushToListClient(clients, data);
+                    free(tokeyCliete);    
+                    printf("Cadastrado com sucesso\n");
+                    fromListToFileClient(clients, path);
                     break;
                 }
-
-                while(getchar() != '\n');
-                printf("Digite o email: ");
-                fgets(email, 100, stdin);
-                while(getchar() != '\n');
-                printf("Digite o telefone: ");
-                fgets(telefone, 15, stdin);
-                while(getchar() != '\n');
-                printf("Digite a idade: ");
-                fgets(idade, 15, stdin);
-                while(getchar() != '\n');
-                printf("Digite a senha: ");
-                fgets(password, 50, stdin);
-                while(getchar() != '\n');
-
-
-                
-                strtok(nome, "\n");
-                strtok(cpf, "\n");
-                strtok(email, "\n");
-                strtok(telefone, "\n");
-                strtok(idade, "\n");
-                strtok(password, "\n");
-                
-                Data *data = createData(tokeyCliete, nome, cpf, email, telefone, idade, password);
-                pushToListClient(clients, data);
-                free(tokeyCliete);    
-                printf("Cadastrado com sucesso\n");
-                fromListToFileClient(clients, path);
                 
 
                 break;
             case '3':
-                char delCpf[15];
+                char delCpf[12];
+                char delPassword[50];
                 printf("Digite o cpf: ");
-                fgets(delCpf, 15, stdin);
+                fgets(delCpf, 12, stdin);
                 while(getchar() != '\n');
-                strtok(delCpf, "\n");
+                printf("Digite a senha: ");
+                fgets(delPassword, 50, stdin);
+                while(getchar() != '\n');
+
+                delCpf[strcspn(delCpf, "\n")] = '\0';
+                delPassword[strcspn(delPassword, "\n")] = '\0';
+                
+                if(verifyPassword(clients, delCpf, delPassword) == false){
+                    printf("Cpf ou senha incorretos\n");
+                    continue;
+                }
+
                 
                 deleteClient(clients, delCpf);
                 break;
             case '4':
+                printf("Saindo sem salvar\n");
                 exit(0);
                 break;
             case '5':
+                printf("Salvando e saindo\n");
                 fromListToFileClient(clients, path);
                 freeClientList(clients);
                 exit(0);
@@ -1119,7 +1223,7 @@ int main(){
                 break;
             case '4':
                 printf("Todas as passagens compradas:\n");
-                showALLPassages(thisClientTokey, passages, routes);
+                showALLPassages(clients, thisClientTokey, passages, routes);
                 printf("Pressione enter para continuar\n");
                 getchar();
 
