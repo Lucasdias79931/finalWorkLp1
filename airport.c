@@ -854,7 +854,8 @@ DataRoutes *selectRoutes(Routes *routes, char *leave, char *arrive, time_t *deli
         
         return NULL;
     }
-
+    
+    data[k]->lugaresDisponiveis--;
     strcpy(dataReturn->routesTokey, data[k]->routesTokey);
     strcpy(dataReturn->aviaoTokey, data[k]->aviaoTokey);
     strcpy(dataReturn->AviaoEmpresa, data[k]->AviaoEmpresa);
@@ -1062,8 +1063,8 @@ int main(){
     // login e cadastro
 
     // Vou usar para armazenar o tokey do usuário logado. será útil na hora da compra
-    char *thisClientTokey = "NWLRBBMQBHCDARZOWKKYHIDDQSCDX";
-    /*
+    char *thisClientTokey = NULL;
+    
     while(true){
         clearScreen();
         printf("Escolha uma opcao:\n");
@@ -1195,7 +1196,7 @@ int main(){
         if(next)break;
     }
     
-*/
+
     // pega as rotas e inicializa a lista de rotas
     char pathRoutes[] = "DB/Routes.txt";
 
@@ -1259,32 +1260,27 @@ int main(){
                 } else {
                     printf("Falha ao adicionar passagem de ida.\n");
                 }
-
+                
+                printf("pressione enter para continuar");
+                getchar();
                 clearScreen();
 
-                
                 printf("Escolha a passagem de volta\nPresione enter para confirmar\n");
                 getchar();
                 fouldRoute(leave, arrive, Estados, back);
                 DataRoutes *volta = selectRoutes(routes, arrive, leave, &today);
-               
-                if(!volta && !(buyTicket(passages, volta, thisClientTokey))){
-                    printf("Algum erro ocorreu ao tentar comprar passagem de volta, Tente novamente mais tarde!\n");
-
-                    
-                    break;
+            
+                if(volta && buyTicket(passages, volta, thisClientTokey)) {
+                    printf("Passagem de volta adicionada com sucesso.\n");
+                } else {
+                    printf("Falha ao adicionar passagem de volta.\n");
                 }
 
-                
-                
                 printf("Passagens compradas com sucesso!\n");
                 printf("Pressione enter para continuar\n");
                 getchar();
 
                 clearScreen();
-
-                
-                
                 break;
             case '2':
                 printf("Escolha a passagem de ida\nPresione enter para confirmar\n");
@@ -1299,7 +1295,7 @@ int main(){
                     printf("Falha ao adicionar passagem .\n");
                 }
 
-                clearScreen();
+                
 
                 printf("Passagen comprada com sucesso!\n");
                 printf("Pressione enter para continuar\n");
