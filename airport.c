@@ -412,6 +412,15 @@ void fromFileToListRoutes(Routes *routes, char *path){
         if(leave_time >= today && leave_time <= nextWeek){
             data->price += data->price * 0.30;
         }
+
+        if(data->lugaresDisponiveis <= 10){
+            data->price += data->price * 0,20;
+        }else if(data->lugaresDisponiveis> 10 && data->lugaresDisponiveis <= 30){
+            data->price += data->price * 0,10;
+        }
+
+
+        
         pushToListRoutes(routes, data);
        
     }
@@ -766,6 +775,11 @@ DataRoutes *selectRoutes(Routes *routes, char *leave, char *arrive, time_t *deli
 
    
     DataRoutes *data[10] = {0};
+    if(!data){
+        perror("ERROR");
+        printf("\nErro ao tentar criar array auxiliar para rotas!\n");
+        return NULL;
+    }
     int k = 0;
     bool fould = false;
    
@@ -816,8 +830,8 @@ DataRoutes *selectRoutes(Routes *routes, char *leave, char *arrive, time_t *deli
                 if(escolha == 11){
                     k = 0;
                     for(int i = 0; i < 10; i++){
-                        
-                        
+                        data[i] = NULL;
+                        fould = false;
                     }
                     break;
                 }
@@ -888,7 +902,8 @@ bool buyTicket(Passages *passages, DataRoutes *dataRoute, char *tokeyClient){
     char *passageTokey = createPassageTokey(passages);
     dataPassages *newPassage = createDataPassages(dataRoute->routesTokey, tokeyClient, dataRoute->price, passageTokey);
     if(!newPassage){
-        perror("erro ao criar passagem");
+        perror("ERROR");
+        printf("erro ao criar passagem");
         return false; 
     }
 
