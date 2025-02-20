@@ -5,28 +5,28 @@
 #include <time.h>
 
 typedef struct Data {
-    char *tokey;
+    char *token;
     char *empresa;
 } Data;
 
-char *newTokey(Data data[], int size) {
+char *newToken(Data data[], int size) {
     while (true) {
-        char *tokey = malloc(sizeof(char) * 51);
+        char *token = malloc(sizeof(char) * 51);
         for (int i = 0; i < 49; i++) {
-            tokey[i] = 'A' + rand() % 26;
+            token[i] = 'A' + rand() % 26;
         }
-        tokey[50] = '\0';
+        token[50] = '\0';
 
         int i = 0;
         for (i = 0; i < size; i++) {
-            if (data[i].tokey != NULL && strcmp(data[i].tokey, tokey) == 0) {
-                free(tokey);
+            if (data[i].token != NULL && strcmp(data[i].token, token) == 0) {
+                free(token);
                 break;
             }
         }
 
         if (i == size) {
-            return tokey;
+            return token;
         }
     }
 }
@@ -69,13 +69,13 @@ int main(int argc, char *argv[]) {
     int size = 200;
 
     for (int i = 0; i < size; i++) {
-        data[i].tokey = newTokey(data, i);
+        data[i].token = newToken(data, i);
         data[i].empresa = empresas[rand() % 15];
-        fprintf(file, "%s\n%s\n%s\n", data[i].tokey, "50", data[i].empresa);
+        fprintf(file, "%s\n%s\n%s\n", data[i].token, "50", data[i].empresa);
     }
 
     for (int i = 0; i < size; i++) {
-        free(data[i].tokey);
+        free(data[i].token);
     }
 
     fclose(file);

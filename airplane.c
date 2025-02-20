@@ -9,7 +9,7 @@
 /////////////////////////////////////////////
 // Struct para armazenar os dados dos aviões
 typedef struct Data{
-    char tokey[51];
+    char token[51];
     char empresa[50];
     int lugaresMax;
 }Data;
@@ -30,14 +30,14 @@ typedef struct Airplane{
 
 // funções para manipular lista de avioes
 
-Data *createData(char *empresa, int lugaresMax, char *tokey);
+Data *createData(char *empresa, int lugaresMax, char *token);
 
 
 void pushToListAirplane(Airplane *airplane, Data *data);
 
-void deleteInList(Airplane *airplane, char *tokey);
+void deleteInList(Airplane *airplane, char *token);
 
-char *createTokey(Airplane *airplane);
+char *createToken(Airplane *airplane);
 void printList(Airplane *airplane);
 
 // funções para manipular arquivos
@@ -56,8 +56,8 @@ const char Estados[][3] = {"AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
 
 
 typedef struct DataRoutes{
-    char routeTokey[20];
-    char aviaoTokey[51];
+    char routeToken[20];
+    char aviaoToken[51];
     char AviaoEmpresa[50];
     int lugaresMax;
     int lugaresDisponiveis;
@@ -84,7 +84,7 @@ typedef struct Routes{
 void pushFromListRoutesToFile(Routes *routes, char *path);
 
 void generateRoute(No *airplane, Routes *routes, time_t leave, int origemIndex, int destinoIndex);
-char *createRouteTokey(Routes *routes);
+char *createRouteToken(Routes *routes);
 void freeListRoutes(Routes **routes);
 
 // função principal
@@ -127,12 +127,12 @@ int main(){
                 printList(airplane);
                 break;
             case '2':
-                printf("Digite o tokey do aviao a ser removido: ");
-                char tokey[50];
-                fgets(tokey, 50, stdin);
+                printf("Digite o token do aviao a ser removido: ");
+                char token[50];
+                fgets(token, 50, stdin);
                 while(getchar() != '\n');
 
-                printf("\nTem certeza que deseja remover o aviao:%s (s/n)?", tokey);
+                printf("\nTem certeza que deseja remover o aviao:%s (s/n)?", token);
                 
                 char confirm;
                 scanf("%c", &confirm);
@@ -144,22 +144,22 @@ int main(){
                     
                     break;
                 }
-                deleteInList(airplane, tokey);
+                deleteInList(airplane, token);
                 
 
                 break;
             case '3':
                 char empresa[50];
                 
-                char *Tokey = createTokey(airplane);
+                char *Token = createToken(airplane);
 
                 printf("Digite o nome da empresa: ");
                 fgets(empresa, 50, stdin);
                 while(getchar() != '\n');
 
-                Data *data = createData(empresa, 50, Tokey);
+                Data *data = createData(empresa, 50, Token);
                 pushToListAirplane(airplane, data);
-                free(Tokey);
+                free(Token);
                 printf("Aviao adicionado com sucesso\n");
                 break;
             case '4':
@@ -232,8 +232,8 @@ int main(){
 ////////////////////////////////////////////////////
 // funções para manipular lista de avioes
 
-Data *createData(char *empresa, int lugaresMax, char *tokey){
-    if(!empresa ||  !tokey ){
+Data *createData(char *empresa, int lugaresMax, char *token){
+    if(!empresa ||  !token ){
         perror("erro em createData");
         return NULL;
     }
@@ -248,7 +248,7 @@ Data *createData(char *empresa, int lugaresMax, char *tokey){
 
     
 
-    strcpy(data->tokey, tokey);
+    strcpy(data->token, token);
     strcpy(data->empresa, empresa);
     data->lugaresMax = lugaresMax;
     
@@ -283,8 +283,8 @@ void pushToListAirplane(Airplane *airplane, Data *data){
    airplane->size++;
 }
 
-void deleteInList(Airplane *airplane, char *tokey) {
-    if (!airplane || !tokey) {
+void deleteInList(Airplane *airplane, char *token) {
+    if (!airplane || !token) {
         perror("erro em deleteInList");
         exit(1);
     }
@@ -293,7 +293,7 @@ void deleteInList(Airplane *airplane, char *tokey) {
     No *prev = NULL;
 
     while (current != NULL) {
-        if (strcmp(current->data->tokey, tokey) == 0) {
+        if (strcmp(current->data->token, token) == 0) {
             if (prev == NULL) {
                 airplane->ini = current->next;
             } else {
@@ -315,7 +315,7 @@ void deleteInList(Airplane *airplane, char *tokey) {
         current = current->next;
     }
 
-    printf("Avião com o tokey especificado não encontrado\n");
+    printf("Avião com o token especificado não encontrado\n");
 }
 
 
@@ -334,7 +334,7 @@ void printList(Airplane *airplane){
     No *current = airplane->ini;
     while(current){
         printf("\n////////////////////////////////////////////////////////\n");
-        printf("Tokey:%s\nlugaresMax:%i\nEmpresa:%s\n", current->data->tokey, current->data->lugaresMax, current->data->empresa);
+        printf("Token:%s\nlugaresMax:%i\nEmpresa:%s\n", current->data->token, current->data->lugaresMax, current->data->empresa);
         printf("////////////////////////////////////////////////////////\n");
         current = current->next;
     }
@@ -357,67 +357,67 @@ void fromFileToList(Airplane *airplane, char *path){
 
     char empresa[51];
     char lugaresMax[4];
-    char tokey[52];
+    char token[52];
     
     /* 
         le os dados do arquivo e armazena em uma struct Data
         depois armazena a struct na lista principal que será manipulada pelo usuário
     */
-    while(fgets(tokey, 52, file) != NULL){
+    while(fgets(token, 52, file) != NULL){
         fgets(lugaresMax, 4, file);
         fgets(empresa, 51, file);
         
         strtok(empresa, "\n");
         strtok(lugaresMax, "\n");
-        strtok(tokey, "\n");
+        strtok(token, "\n");
         int  maxLugar = atoi(lugaresMax);
 
-        Data *data = createData(empresa, maxLugar, tokey);
+        Data *data = createData(empresa, maxLugar, token);
         pushToListAirplane(airplane, data);
     }
 
     fclose(file);
 }
 
-//gera um tokey aleatorio e garante que nao seja repetido
-char *createTokey(Airplane *airplane){
+//gera um token aleatorio e garante que nao seja repetido
+char *createToken(Airplane *airplane){
     if(!airplane){
-        perror("erro em createTokey");
+        perror("erro em createToken");
         exit(1);
     }
 
     while(true){
-        char *tokey = malloc(sizeof(char) * 51);
-        if(!tokey){
+        char *token = malloc(sizeof(char) * 51);
+        if(!token){
             perror("erro ao alocar memória");
-            free(tokey);
+            free(token);
             exit(1);
         }
         
         for(int i = 0; i < 51; i++){
-            tokey[i] = 'A' + rand() % 26;
+            token[i] = 'A' + rand() % 26;
         }
-        tokey[50] = '\0';
+        token[50] = '\0';
 
         if(airplane->size == 0){
-            return tokey;
+            return token;
         }
 
         No *current = airplane->ini;
 
         while(current){
-            if(strcmp(current->data->tokey, tokey) == 0){
+            if(strcmp(current->data->token, token) == 0){
                 break;
             }
             current = current->next;
         }
 
-        // current só será diferente de NULL se não tiver estrapolado o final da lista, logo algum aviao com esse tokey
+        // current só será diferente de NULL se não tiver estrapolado o final da lista, logo algum aviao com esse token
         if(current){
             continue;
         }
 
-        return tokey;
+        return token;
     }
 
    
@@ -438,7 +438,7 @@ void fromListToFileAirplane(Airplane *airplane, char *path){
 
     No *current = airplane->ini;
     while(current != NULL){
-        fprintf(file, "%s\n%i\n%s\n", current->data->tokey, current->data->lugaresMax, current->data->empresa);
+        fprintf(file, "%s\n%i\n%s\n", current->data->token, current->data->lugaresMax, current->data->empresa);
         current = current->next;
     }
     fclose(file);
@@ -482,11 +482,11 @@ void generateRoute(No *airplane, Routes *routes, time_t leave, int origemIndex, 
         return;
     }
 
-    char *routeTokey = createRouteTokey(routes);
-    strcpy(newRoute->dataRoutes->routeTokey, routeTokey);
+    char *routeToken = createRouteToken(routes);
+    strcpy(newRoute->dataRoutes->routeToken, routeToken);
     newRoute->dataRoutes->lugaresMax = 50;
     newRoute->dataRoutes->lugaresDisponiveis = 50;
-    strcpy(newRoute->dataRoutes->aviaoTokey, airplane->data->tokey);
+    strcpy(newRoute->dataRoutes->aviaoToken, airplane->data->token);
     strcpy(newRoute->dataRoutes->AviaoEmpresa, airplane->data->empresa);
     strcpy(newRoute->dataRoutes->origem, Estados[origemIndex]);
     strcpy(newRoute->dataRoutes->destino, Estados[destinoIndex]);
@@ -510,36 +510,36 @@ void generateRoute(No *airplane, Routes *routes, time_t leave, int origemIndex, 
     }
 
     routes->size++;
-    free(routeTokey);
+    free(routeToken);
 }
 
-char *createRouteTokey(Routes *routes){
+char *createRouteToken(Routes *routes){
     if(!routes){
-        perror("erro em createTokey");
+        perror("erro em createToken");
         exit(1);
     }
 
     while(true){
-        char *tokey = malloc(sizeof(char) * 20);
-        if(!tokey){
+        char *token = malloc(sizeof(char) * 20);
+        if(!token){
             perror("erro ao alocar memória");
-            free(tokey);
+            free(token);
             exit(1);
         }
         
         for(int i = 0; i < 19; i++){
-            tokey[i] = 'A' + rand() % 26;
+            token[i] = 'A' + rand() % 26;
         }
-        tokey[19] = '\0';
+        token[19] = '\0';
 
         if(routes->size == 0){
-            return tokey;
+            return token;
         }
 
         NoRoutes *current = routes->ini;
 
         while(current){
-            if(strcmp(current->dataRoutes->routeTokey, tokey) == 0){
+            if(strcmp(current->dataRoutes->routeToken, token) == 0){
                 break;
             }
             current = current->next;
@@ -549,7 +549,7 @@ char *createRouteTokey(Routes *routes){
             continue;
         }
 
-        return tokey;
+        return token;
     }
 
    
@@ -579,8 +579,8 @@ void pushFromListRoutesToFile(Routes *routes, char *path){
         strftime(chegada_str, sizeof(chegada_str), "%c", localtime(&current->dataRoutes->dateArrive));
   
         fprintf(file, "%s\n%s\n%s\n%i\n%i\n%s\n%s\n%s\n%s\n", 
-                current->dataRoutes->routeTokey,
-                current->dataRoutes->aviaoTokey, 
+                current->dataRoutes->routeToken,
+                current->dataRoutes->aviaoToken, 
                 current->dataRoutes->AviaoEmpresa, 
                 current->dataRoutes->lugaresMax,
                 current->dataRoutes->lugaresDisponiveis,
